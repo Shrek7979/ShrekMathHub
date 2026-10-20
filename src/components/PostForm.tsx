@@ -2,18 +2,22 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { BOARD_CATEGORIES } from '@/lib/curriculum'
+import { BOARD_CATEGORIES, NOTICE } from '@/lib/curriculum'
 import { koError } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/lib/types'
+import { useAuth } from './AuthProvider'
 import { MarkdownEditor } from './MarkdownEditor'
 import { ErrorBox } from './ui'
 
 /** 게시판 글쓰기 / 고치기 */
 export function PostForm({ initial, defaultCategory }: { initial?: Post; defaultCategory?: string }) {
   const router = useRouter()
+  const { isAdmin } = useAuth()
+  // 공지는 관리자만 (데이터베이스 규칙도 같은 내용으로 막고 있음)
+  const categories = isAdmin ? [NOTICE, ...BOARD_CATEGORIES] : BOARD_CATEGORIES
   const [category, setCategory] = useState(
-    initial?.category ?? (defaultCategory && BOARD_CATEGORIES.includes(defaultCategory) ? defaultCategory : '질문'),
+    initial?.category ?? (defaultCategory && categories.includes(defaultCategory) ? defaultCategory : '질문'),
   )
   const [title, setTitle] = useState(initial?.title ?? '')
   const [body, setBody] = useState(initial?.body ?? '')
@@ -39,9 +43,9 @@ export function PostForm({ initial, defaultCategory }: { initial?: Post; default
       <div>
         <span className="label">분류</span>
         <div className="flex flex-wrap gap-2">
-          {BOARD_CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <button key={c} type="button" onClick={() => setCategory(c)} className={`chip ${category === c ? 'chip-on' : ''}`}>
-              {c}
+              {c === NOTICE ? '📢 공지' : c}
             </button>
           ))}
         </div>

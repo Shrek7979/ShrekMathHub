@@ -1,12 +1,13 @@
 import Link from 'next/link'
+import { NOTICE, QUESTION } from '@/lib/curriculum'
 import { extOf } from '@/lib/files'
 import { timeAgo } from '@/lib/format'
 import { countOf, type Post, type Resource } from '@/lib/types'
 
 export const RESOURCE_LIST_COLUMNS =
-  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, created_at, author:profiles(name), likes(count), comments(count)'
+  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, featured, created_at, author:profiles(name), likes(count), comments(count)'
 
-export const POST_LIST_COLUMNS = 'id, category, title, created_at, author:profiles(name), likes(count), comments(count)'
+export const POST_LIST_COLUMNS = 'id, category, title, solved, created_at, author:profiles(name), likes(count), comments(count)'
 
 export function ResourceItem({ r }: { r: Resource }) {
   const exts = Array.from(new Set(r.files.map((f) => extOf(f.name).toUpperCase()).filter(Boolean)))
@@ -14,6 +15,7 @@ export function ResourceItem({ r }: { r: Resource }) {
     <li>
       <Link href={`/resources/${r.id}`} className="card block px-4 py-3 transition hover:border-brand-300 hover:shadow-sm">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          {r.featured && <span className="badge bg-amber-100 text-amber-800">⭐ 추천</span>}
           <span className="badge-brand">{r.resource_type}</span>
           <span className="badge">
             {r.subject}
@@ -39,10 +41,17 @@ export function ResourceItem({ r }: { r: Resource }) {
 
 export function PostItem({ p }: { p: Post }) {
   const comments = countOf(p.comments)
+  const notice = p.category === NOTICE
   return (
     <li>
-      <Link href={`/board/${p.id}`} className="flex items-center gap-3 px-4 py-3 transition hover:bg-slate-50">
-        <span className="badge shrink-0">{p.category}</span>
+      <Link
+        href={`/board/${p.id}`}
+        className={`flex items-center gap-3 px-4 py-3 transition hover:bg-slate-50 ${notice ? 'bg-amber-50/60' : ''}`}
+      >
+        <span className={`badge shrink-0 ${notice ? 'bg-amber-100 font-semibold text-amber-800' : ''}`}>
+          {notice ? '📢 공지' : p.category}
+        </span>
+        {p.category === QUESTION && p.solved && <span className="badge shrink-0 bg-brand-50 text-brand-700">✔ 해결</span>}
         <span className="min-w-0 flex-1 truncate font-medium text-slate-900">
           {p.title}
           {comments > 0 && <span className="ml-1.5 text-sm font-semibold text-brand-600">[{comments}]</span>}

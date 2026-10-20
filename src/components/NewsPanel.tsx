@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { SITE } from '@/lib/site'
 
-const NEWS_URL = 'https://shrek7979.github.io/ShrekEduInsight/?s=math'
+const NEWS_URL = SITE.newsUrl
 const STORAGE_KEY = 'smh-news-panel'
 
 /**

@@ -7,21 +7,23 @@ import { Gate } from '@/components/Gate'
 import { Empty, Spinner } from '@/components/ui'
 import { LEVEL_LABEL } from '@/lib/curriculum'
 import { removeFiles } from '@/lib/files'
-import { fullDate, koError, timeAgo } from '@/lib/format'
+import { fileSize, fullDate, koError, timeAgo } from '@/lib/format'
+import { SITE } from '@/lib/site'
 import { supabase } from '@/lib/supabase'
 import type { FileInfo, MemberStatus, Profile, ProfilePrivate } from '@/lib/types'
 
 type Member = Profile & { profile_private: ProfilePrivate | ProfilePrivate[] | null }
-type Tab = 'pending' | 'members' | 'reports'
+type Tab = 'stats' | 'pending' | 'members' | 'reports'
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<Tab>('pending')
+  const [tab, setTab] = useState<Tab>('stats')
   return (
     <Gate admin>
       <h1 className="page-title">관리자</h1>
       <div className="mt-5 flex gap-1 border-b border-slate-200">
         {(
           [
+            ['stats', '한눈에 보기'],
             ['pending', '가입 신청'],
             ['members', '회원'],
             ['reports', '신고'],
@@ -39,7 +41,13 @@ export default function AdminPage() {
         ))}
       </div>
       <div className="mt-5">
-        {tab === 'pending' && <Members only="pending" />}
+        {tab === 'stats' && <Stats />}
+        {tab === 'pending' && (
+          <>
+            <GoogleTestUserNote />
+            <Members only="pending" />
+          </>
+        )}
         {tab === 'members' && <Members />}
         {tab === 'reports' && <Reports />}
       </div>
@@ -266,3 +274,83 @@ function Reports() {
     </div>
   )
 }
+
+type StatsData = {
+  members: number
+  pending: number
+  resources: number
+  posts: number
+  comments: number
+  downloads: number
+  files: number
+  storage_bytes: number
+}
+
+function Stats() {
+  const [s, setS] = useState<StatsData | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    supabase.rpc('admin_stats').then(({ data, error }) => (error ? setError(koError(error)) : setS(data as StatsData)))
+  }, [])
+
+  if (error) return <Empty>{error}</Empty>
+  if (!s) return <Spinner />
+
+  const used = s.storage_bytes / SITE.storageLimitBytes
+  const tiles: [string, number, string?][] = [
+    ['승인 회원', s.members],
+    ['가입 대기', s.pending],
+    ['자료', s.resources],
+    ['게시글', s.posts],
+    ['댓글', s.comments],
+    ['총 내려받기', s.downloads],
+  ]
+
+  return (
+    <div className="space-y-6">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {tiles.map(([label, value]) => (
+          <div key={label} className="card p-4">
+            <dt className="text-xs text-slate-500">{label}</dt>
+            <dd className="mt-1 text-2xl font-bold tabular-nums text-slate-900">{value.toLocaleString('ko-KR')}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <section className="card p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-bold text-slate-900">파일 저장 공간</h2>
+          <p className="text-sm tabular-nums text-slate-600">
+            {fileSize(s.storage_bytes)} / {fileSize(SITE.storageLimitBytes)} 사용 · 파일 {s.files}개
+          </p>
+        </div>
+        <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(used * 100)}>
+          <div
+            className={`h-full rounded-full ${used > 0.9 ? 'bg-red-500' : used > 0.7 ? 'bg-amber-500' : 'bg-brand-600'}`}
+            style={{ width: `${Math.min(100, Math.max(used * 100, used > 0 ? 1 : 0))}%` }}
+          />
+        </div>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-relaxed text-slate-500">
+          <li>Supabase 무료 요금제는 파일 저장 1GB, 한 파일 최대 50MB, 한 달 내려받기 전송량 5GB 까지예요.</li>
+          <li>큰 영상·PPT 는 Google 드라이브나 유튜브에 올리고 자료의 [링크] 칸에 주소를 넣으면 저장 공간을 아낄 수 있어요.</li>
+          <li>공간이 부족해지면 Supabase Pro 요금제(월 25달러 정도)로 바꾸면 크게 늘어나요.</li>
+        </ul>
+      </section>
+    </div>
+  )
+}
+
+/** 앱을 Google 에 '게시'하기 전까지는 테스트 사용자로 등록된 계정만 Google 로그인이 된다 */
+function GoogleTestUserNote() {
+  return (
+    <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-900">
+      <b>Google 로그인 안내</b> — 지금은 Google 로그인이 &lsquo;테스트 모드&rsquo;라서, 가입하려는 선생님의 Gmail 주소를 먼저{' '}
+      <a href={SITE.googleAudienceUrl} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
+        Google Cloud 테스트 사용자
+      </a>
+      에 추가해야 로그인할 수 있어요. (최대 100명, 사이트를 인터넷에 올린 뒤 &lsquo;앱 게시&rsquo;를 하면 필요 없어져요)
+    </div>
+  )
+}
+

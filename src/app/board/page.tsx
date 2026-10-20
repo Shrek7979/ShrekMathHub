@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem } from '@/components/ListItems'
 import { Empty, Spinner } from '@/components/ui'
-import { BOARD_CATEGORIES } from '@/lib/curriculum'
+import { BOARD_CATEGORIES, NOTICE } from '@/lib/curriculum'
 import { cleanSearch } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/lib/types'
@@ -33,6 +33,8 @@ function Board() {
   const [items, setItems] = useState<Post[] | null>(null)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
+  const [notices, setNotices] = useState<Post[]>([])
+  const showPinned = !category && !q
 
   function setParam(changes: Record<string, string>) {
     const next = new URLSearchParams(params.toString())
@@ -52,10 +54,23 @@ function Board() {
     setItems(null)
   }, [category, q])
 
+  // 전체 보기에서는 공지를 맨 위에 따로 고정
+  useEffect(() => {
+    if (!showPinned) return setNotices([])
+    supabase
+      .from('posts')
+      .select(POST_LIST_COLUMNS)
+      .eq('category', NOTICE)
+      .order('created_at', { ascending: false })
+      .limit(3)
+      .then(({ data }) => setNotices((data as unknown as Post[]) ?? []))
+  }, [showPinned])
+
   useEffect(() => {
     let cancelled = false
     let query = supabase.from('posts').select(POST_LIST_COLUMNS, { count: 'exact' })
     if (category) query = query.eq('category', category)
+    else if (!q) query = query.neq('category', NOTICE)
     const s = cleanSearch(q)
     if (s) query = query.or(`title.ilike.%${s}%,body.ilike.%${s}%`)
     query
@@ -83,9 +98,9 @@ function Board() {
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        {['', ...BOARD_CATEGORIES].map((c) => (
+        {['', NOTICE, ...BOARD_CATEGORIES].map((c) => (
           <button key={c || 'all'} onClick={() => setParam({ category: c })} className={`chip ${category === c ? 'chip-on' : ''}`}>
-            {c || '전체'}
+            {c === NOTICE ? '📢 공지' : c || '전체'}
           </button>
         ))}
       </div>
@@ -100,6 +115,14 @@ function Board() {
         <input className="input" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="제목·내용에서 찾기" />
         <button className="btn-secondary shrink-0">찾기</button>
       </form>
+
+      {notices.length > 0 && (
+        <ul className="card mt-4 divide-y divide-slate-100 overflow-hidden border-amber-200">
+          {notices.map((p) => (
+            <PostItem key={p.id} p={p} />
+          ))}
+        </ul>
+      )}
 
       <div className="mt-4">
         {items === null ? (

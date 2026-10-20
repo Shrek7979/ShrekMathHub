@@ -23,7 +23,8 @@ const SUPABASE_STUBS = `
   grant usage on schema storage to anon, authenticated;
   create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint);
   create table storage.objects (
-    id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid default auth.uid());
+    id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid default auth.uid(),
+    metadata jsonb);
   alter table storage.objects enable row level security;
   grant select, insert, update, delete on storage.objects to anon, authenticated;
   create function storage.foldername(name text) returns text[] language sql immutable as
@@ -195,6 +196,43 @@ await test('북마크는 본인만 보임', async () => {
   await as(B, 'insert into bookmarks (post_id) values ($1)', [p.id])
   eq(await rows(A, 'select id from bookmarks'), [])
   eq((await rows(B, 'select id from bookmarks')).length, 1)
+})
+
+console.log('\n허브 기능: 추천 자료·공지·해결됨')
+await test('추천 자료는 관리자만 지정 (회원은 칸도 함수도 막힘), 수정 시각은 그대로', async () => {
+  await fails(as(B, `update resources set featured = true where id = $1`, [rB.id]), /permission denied/)
+  await fails(as(B, `select admin_feature_resource($1, true)`, [rB.id]), /관리자만/)
+  const before = await one(A, 'select updated_at from resources where id = $1', [rB.id])
+  await as(A, `select admin_feature_resource($1, true)`, [rB.id])
+  const after = await one(B, 'select featured, updated_at from resources where id = $1', [rB.id])
+  eq(after.featured, true)
+  eq(String(after.updated_at), String(before.updated_at))
+})
+await test('공지는 관리자만 쓸 수 있고, 회원이 글을 공지로 바꿀 수도 없음', async () => {
+  await fails(as(B, `insert into posts (category, title, body) values ('공지', '몰래 공지', 'x')`), /row-level security/)
+  await fails(as(B, `update posts set category = '공지' where id = $1`, [p.id]), /row-level security/)
+  const n = await one(A, `insert into posts (category, title, body) values ('공지', '사이트 오픈', '환영합니다') returning id`)
+  if (!n?.id) throw new Error('관리자 공지 실패')
+})
+await test('질문 "해결됨"은 작성자만 표시, 수정 시각은 그대로', async () => {
+  const before = await one(B, 'select updated_at from posts where id = $1', [p.id])
+  eq(await rows(A, `update posts set solved = true where id = $1 returning id`, [p.id]), [])
+  const after = await one(B, `update posts set solved = true where id = $1 returning solved, updated_at`, [p.id])
+  eq(after.solved, true)
+  eq(String(after.updated_at), String(before.updated_at))
+})
+
+await test('교육과정 지도: 과목·단원별 자료 수는 승인 회원만', async () => {
+  const counts = await rows(B, 'select subject, unit, n from resource_counts() order by n desc')
+  eq(counts.length > 0, true)
+  eq(await rows(C, 'select * from resource_counts()'), [])
+  await fails(as(null, 'select * from resource_counts()'), /permission denied/)
+})
+await test('관리자 통계는 관리자만', async () => {
+  await fails(as(B, 'select admin_stats()'), /관리자만/)
+  const s = (await one(A, 'select admin_stats() as s')).s
+  eq(typeof s.resources, 'number')
+  eq(typeof s.storage_bytes, 'number')
 })
 
 console.log('\n신고')

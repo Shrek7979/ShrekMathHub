@@ -39,6 +39,8 @@ export type Resource = {
   link_url: string | null
   files: FileInfo[]
   download_count: number
+  /** 관리자 추천 자료 */
+  featured: boolean
   created_at: string
   updated_at: string
   author?: Author
@@ -52,6 +54,8 @@ export type Post = {
   category: string
   title: string
   body: string
+  /** 질문 글: 해결됨 */
+  solved: boolean
   created_at: string
   updated_at: string
   author?: Author

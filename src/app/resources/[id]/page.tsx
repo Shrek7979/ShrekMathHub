@@ -5,13 +5,15 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { CommentSection } from '@/components/CommentSection'
+import { FilePreview, canPreview } from '@/components/FilePreview'
 import { Gate } from '@/components/Gate'
 import { Markdown } from '@/components/Markdown'
 import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
 import { Empty, Spinner } from '@/components/ui'
 import { LEVEL_LABEL } from '@/lib/curriculum'
-import { canPreview, downloadFile, extOf, previewFile, removeFiles } from '@/lib/files'
+import { embedOf } from '@/lib/embed'
+import { downloadFile, extOf, removeFiles } from '@/lib/files'
 import { fileSize, fullDate, koError } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { FileInfo, Resource } from '@/lib/types'
@@ -31,6 +33,7 @@ function Detail() {
   const { session, isAdmin } = useAuth()
   const [r, setR] = useState<Resource | null | undefined>(undefined)
   const [busyFile, setBusyFile] = useState<string | null>(null)
+  const [openPreview, setOpenPreview] = useState<string | null>(null)
 
   useEffect(() => {
     supabase
@@ -56,6 +59,7 @@ function Detail() {
     )
 
   const mine = r.author_id === session?.user.id
+  const embed = embedOf(r.link_url)
 
   async function download(f: FileInfo) {
     setBusyFile(f.path)
@@ -78,22 +82,41 @@ function Detail() {
     router.replace('/resources')
   }
 
+  async function toggleFeatured() {
+    if (!r) return
+    const { error } = await supabase.rpc('admin_feature_resource', { rid: r.id, on_off: !r.featured })
+    if (error) return alert(koError(error))
+    setR({ ...r, featured: !r.featured })
+  }
+
   return (
     <article className="mx-auto max-w-3xl">
-      <Link href="/resources" className="text-sm text-slate-500 hover:text-slate-800">
-        ← 자료실
+      <Link href={`/resources?level=${r.school_level}&subject=${encodeURIComponent(r.subject)}`} className="text-sm text-slate-500 hover:text-slate-800">
+        ← {r.subject} 자료
       </Link>
 
       <header className="mt-3">
         <div className="flex flex-wrap gap-1.5 text-xs">
+          {r.featured && <span className="badge bg-amber-100 text-amber-800">⭐ 허브 추천</span>}
           <span className="badge-brand">{r.resource_type}</span>
           <span className="badge">{LEVEL_LABEL[r.school_level]}</span>
-          <span className="badge">{r.subject}</span>
-          {r.unit && <span className="badge">{r.unit}</span>}
+          <Link href={`/resources?level=${r.school_level}&subject=${encodeURIComponent(r.subject)}`} className="badge hover:bg-slate-200">
+            {r.subject}
+          </Link>
+          {r.unit && (
+            <Link
+              href={`/resources?level=${r.school_level}&subject=${encodeURIComponent(r.subject)}&unit=${encodeURIComponent(r.unit)}`}
+              className="badge hover:bg-slate-200"
+            >
+              {r.unit}
+            </Link>
+          )}
         </div>
         <h1 className="mt-2 text-2xl font-bold leading-snug text-slate-900">{r.title}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
-          <b className="text-slate-700">{r.author?.name ?? '알 수 없음'}</b>
+          <Link href={`/teachers/${r.author_id}`} className="font-bold text-slate-700 hover:text-brand-700">
+            {r.author?.name ?? '알 수 없음'}
+          </Link>
           <span>{fullDate(r.created_at)}</span>
           {r.updated_at.slice(0, 16) !== r.created_at.slice(0, 16) && <span className="text-xs">(고침 {fullDate(r.updated_at)})</span>}
           <span className="tabular-nums">⬇ {r.download_count}</span>
@@ -101,24 +124,31 @@ function Detail() {
       </header>
 
       {(r.files.length > 0 || r.link_url) && (
-        <section className="card mt-5 divide-y divide-slate-100">
+        <section className="card mt-5 divide-y divide-slate-100 overflow-hidden">
           {r.files.map((f) => (
-            <div key={f.path} className="flex items-center gap-3 px-4 py-3">
-              <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-md bg-slate-100 font-mono text-[11px] font-bold uppercase text-slate-500">
-                {extOf(f.name) || 'file'}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-800">{f.name}</p>
-                <p className="text-xs text-slate-400">{fileSize(f.size)}</p>
-              </div>
-              {canPreview(f) && (
-                <button className="btn-ghost btn-sm" onClick={() => previewFile(f).catch((e) => alert(koError(e)))}>
-                  미리보기
+            <div key={f.path}>
+              <div className="flex items-center gap-3 px-4 py-3">
+                <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-md bg-slate-100 font-mono text-[11px] font-bold uppercase text-slate-500">
+                  {extOf(f.name) || 'file'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-800">{f.name}</p>
+                  <p className="text-xs text-slate-400">{fileSize(f.size)}</p>
+                </div>
+                {canPreview(f) && (
+                  <button
+                    className="btn-ghost btn-sm"
+                    aria-expanded={openPreview === f.path}
+                    onClick={() => setOpenPreview((p) => (p === f.path ? null : f.path))}
+                  >
+                    {openPreview === f.path ? '미리보기 닫기' : '미리보기'}
+                  </button>
+                )}
+                <button className="btn-primary btn-sm" onClick={() => download(f)} disabled={busyFile === f.path}>
+                  {busyFile === f.path ? '받는 중…' : '내려받기'}
                 </button>
-              )}
-              <button className="btn-primary btn-sm" onClick={() => download(f)} disabled={busyFile === f.path}>
-                {busyFile === f.path ? '받는 중…' : '내려받기'}
-              </button>
+              </div>
+              {openPreview === f.path && <FilePreview file={f} />}
             </div>
           ))}
           {r.link_url && (
@@ -136,6 +166,22 @@ function Detail() {
         </section>
       )}
 
+      {embed && (
+        <section className="mt-5">
+          <p className="mb-2 text-xs font-semibold text-slate-500">{embed.kind} 바로 보기</p>
+          <div className="aspect-video overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+            <iframe
+              src={embed.src}
+              title={`${r.title} (${embed.kind})`}
+              loading="lazy"
+              allow="fullscreen; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full"
+            />
+          </div>
+        </section>
+      )}
+
       {r.description && (
         <section className="mt-6">
           <Markdown>{r.description}</Markdown>
@@ -144,8 +190,13 @@ function Detail() {
 
       <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
         <Reactions target={{ resourceId: r.id }} />
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex flex-wrap items-center gap-3">
           {!mine && <ReportButton resourceId={r.id} />}
+          {isAdmin && (
+            <button className="btn-secondary btn-sm" onClick={toggleFeatured}>
+              {r.featured ? '⭐ 추천 해제' : '⭐ 허브 추천'}
+            </button>
+          )}
           {mine && (
             <Link href={`/resources/${r.id}/edit`} className="btn-secondary btn-sm">
               고치기

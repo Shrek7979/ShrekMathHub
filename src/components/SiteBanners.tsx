@@ -1,14 +1,16 @@
+import { SITE } from '@/lib/site'
+
 /** 첫 화면의 함께 보면 좋은 사이트 배너 */
 const SITES = [
   {
-    href: 'https://shrek7979.github.io/ShrekEduInsight/?s=math',
+    href: SITE.newsUrl,
     icon: '📰',
     name: 'Shrek Edu Insight',
     desc: '오늘의 수학, 수업이 되는 뉴스',
     className: 'from-slate-800 to-indigo-700',
   },
   {
-    href: 'https://greensori-map.vercel.app/',
+    href: SITE.greensoriUrl,
     icon: '📍',
     name: 'GreenSori Map',
     desc: '그린소리가 담은 카페 · 공간 · 여행의 기록',

@@ -109,6 +109,7 @@ create table if not exists public.resources (
   link_url       text check (link_url is null or (link_url ~* '^https?://' and char_length(link_url) <= 500)),
   files          jsonb not null default '[]'::jsonb check (jsonb_typeof(files) = 'array'),
   download_count integer not null default 0,
+  featured       boolean not null default false,  -- 관리자 추천 자료
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
@@ -122,11 +123,18 @@ create table if not exists public.posts (
   category   text not null check (char_length(category) between 1 and 20),
   title      text not null check (char_length(title) between 1 and 120),
   body       text not null default '' check (char_length(body) <= 30000),
+  solved     boolean not null default false,  -- 질문 글: 해결됨
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 create index if not exists posts_created_idx on public.posts (created_at desc);
 create index if not exists posts_author_idx on public.posts (author_id);
+
+-- 예전에 만든 데이터베이스에도 새 칸을 더한다 (이미 있으면 건너뜀)
+alter table public.resources add column if not exists featured boolean not null default false;
+alter table public.posts add column if not exists solved boolean not null default false;
+create index if not exists resources_featured_idx on public.resources (created_at desc) where featured;
+create index if not exists posts_category_idx on public.posts (category, created_at desc);
 
 create table if not exists public.comments (
   id          bigint generated always as identity primary key,
@@ -184,14 +192,27 @@ begin
   return new;
 end $$;
 
+-- 내용을 고쳤을 때만 (내려받기 수·추천·해결됨 표시는 "고침"으로 치지 않음)
 drop trigger if exists resources_touch on public.resources;
 create trigger resources_touch before update on public.resources
-  for each row when (old.* is distinct from new.* and old.download_count = new.download_count)
+  for each row when (old.* is distinct from new.*
+                     and old.download_count = new.download_count and old.featured = new.featured)
   execute function public.touch_updated_at();
 
 drop trigger if exists posts_touch on public.posts;
 create trigger posts_touch before update on public.posts
-  for each row execute function public.touch_updated_at();
+  for each row when (old.* is distinct from new.* and old.solved = new.solved)
+  execute function public.touch_updated_at();
+
+-- 관리자: 추천 자료 지정·해제
+create or replace function public.admin_feature_resource(rid bigint, on_off boolean) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_admin() then
+    raise exception '관리자만 할 수 있어요.';
+  end if;
+  update public.resources set featured = on_off where id = rid;
+end $$;
 
 -- 내려받기 횟수 (작성자가 아니어도 +1 만 할 수 있게)
 create or replace function public.count_download(rid bigint) returns void
@@ -222,7 +243,7 @@ grant update (title, description, school_level, subject, unit, resource_type, li
 
 grant select, delete on public.posts to authenticated;
 grant insert (category, title, body) on public.posts to authenticated;
-grant update (category, title, body) on public.posts to authenticated;
+grant update (category, title, body, solved) on public.posts to authenticated;
 
 grant select, delete on public.comments to authenticated;
 grant insert (resource_id, post_id, body) on public.comments to authenticated;
@@ -240,6 +261,8 @@ grant update (status) on public.reports to authenticated;
 
 revoke all on function public.admin_set_member(uuid, text, text) from public, anon;
 revoke all on function public.count_download(bigint) from public, anon;
+revoke all on function public.admin_feature_resource(bigint, boolean) from public, anon;
+grant execute on function public.admin_feature_resource(bigint, boolean) to authenticated;
 revoke all on function public.handle_new_user() from public, anon, authenticated;
 grant execute on function public.admin_set_member(uuid, text, text) to authenticated;
 grant execute on function public.count_download(bigint) to authenticated;
@@ -291,13 +314,14 @@ create policy "resources 지우기" on public.resources for delete to authentica
 drop policy if exists "posts 보기" on public.posts;
 create policy "posts 보기" on public.posts for select to authenticated
   using (public.is_approved());
+-- '공지' 분류는 관리자만 쓸 수 있다
 drop policy if exists "posts 쓰기" on public.posts;
 create policy "posts 쓰기" on public.posts for insert to authenticated
-  with check (public.is_approved() and author_id = auth.uid());
+  with check (public.is_approved() and author_id = auth.uid() and (category <> '공지' or public.is_admin()));
 drop policy if exists "posts 고치기" on public.posts;
 create policy "posts 고치기" on public.posts for update to authenticated
   using (public.is_approved() and author_id = auth.uid())
-  with check (author_id = auth.uid());
+  with check (author_id = auth.uid() and (category <> '공지' or public.is_admin()));
 drop policy if exists "posts 지우기" on public.posts;
 create policy "posts 지우기" on public.posts for delete to authenticated
   using (author_id = auth.uid() or public.is_admin());
@@ -371,3 +395,36 @@ drop policy if exists "자료 파일 지우기" on storage.objects;
 create policy "자료 파일 지우기" on storage.objects for delete to authenticated
   using (bucket_id = 'resources'
          and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+
+-- ---------------------------------------------------------------------
+-- 6. 교육과정 지도·관리자 통계
+-- ---------------------------------------------------------------------
+-- 과목·단원별 자료 수: 부른 사람 권한으로 실행되므로 승인 회원만 결과를 받는다
+create or replace function public.resource_counts()
+returns table (school_level text, subject text, unit text, n bigint)
+language sql stable security invoker set search_path = '' as $$
+  select r.school_level, r.subject, r.unit, count(*) from public.resources r group by 1, 2, 3;
+$$;
+revoke all on function public.resource_counts() from public, anon;
+grant execute on function public.resource_counts() to authenticated;
+
+-- 관리자 통계: 회원·자료·글 수, 총 내려받기, 실제 파일 저장 용량
+create or replace function public.admin_stats() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not public.is_admin() then
+    raise exception '관리자만 볼 수 있어요.';
+  end if;
+  return jsonb_build_object(
+    'members', (select count(*) from public.profiles where status = 'approved'),
+    'pending', (select count(*) from public.profiles where status = 'pending'),
+    'resources', (select count(*) from public.resources),
+    'posts', (select count(*) from public.posts),
+    'comments', (select count(*) from public.comments),
+    'downloads', (select coalesce(sum(download_count), 0) from public.resources),
+    'files', (select count(*) from storage.objects where bucket_id = 'resources'),
+    'storage_bytes', (select coalesce(sum((metadata ->> 'size')::bigint), 0) from storage.objects where bucket_id = 'resources')
+  );
+end $$;
+revoke all on function public.admin_stats() from public, anon;
+grant execute on function public.admin_stats() to authenticated;

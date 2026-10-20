@@ -30,6 +30,8 @@ function ResourceList() {
   const level = (params.get('level') ?? '') as SchoolLevel | ''
   const subject = params.get('subject') ?? ''
   const type = params.get('type') ?? ''
+  const unit = params.get('unit') ?? ''
+  const featured = params.get('featured') === '1'
   const sort = params.get('sort') === 'popular' ? 'popular' : 'recent'
   const q = params.get('q') ?? ''
 
@@ -60,6 +62,8 @@ function ResourceList() {
       if (level) query = query.eq('school_level', level)
       if (subject) query = query.eq('subject', subject)
       if (type) query = query.eq('resource_type', type)
+      if (unit) query = query.eq('unit', unit)
+      if (featured) query = query.eq('featured', true)
       const s = cleanSearch(q)
       if (s) query = query.or(`title.ilike.%${s}%,description.ilike.%${s}%,unit.ilike.%${s}%`)
       query = query
@@ -77,21 +81,26 @@ function ResourceList() {
     return () => {
       cancelled = true
     }
-  }, [level, subject, type, sort, q, page])
+  }, [level, subject, type, unit, featured, sort, q, page])
 
   // 조건이 바뀌면 첫 쪽부터
   useEffect(() => {
     setPage(0)
     setItems(null)
-  }, [level, subject, type, sort, q])
+  }, [level, subject, type, unit, featured, sort, q])
 
   const subjectGroups = level ? SUBJECTS[level] : [...SUBJECTS['중'], ...SUBJECTS['고']]
-  const filtered = !!(level || subject || type || q)
+  const filtered = !!(level || subject || type || unit || featured || q)
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-title">자료실</h1>
+        <div>
+          <h1 className="page-title">자료실</h1>
+          <Link href="/curriculum" className="text-sm text-slate-500 hover:text-brand-700">
+            교육과정 지도로 보기 →
+          </Link>
+        </div>
         <Link href="/resources/new" className="btn-primary">
           + 자료 올리기
         </Link>
@@ -119,7 +128,7 @@ function ResourceList() {
           {(['', '중', '고'] as const).map((l) => (
             <button
               key={l || 'all'}
-              onClick={() => setParam({ level: l, subject: '' })}
+              onClick={() => setParam({ level: l, subject: '', unit: '' })}
               className={`chip ${level === l ? 'chip-on' : ''}`}
             >
               {l === '' ? '전체' : l === '중' ? '중학교' : '고등학교'}
@@ -129,7 +138,7 @@ function ResourceList() {
             aria-label="과목"
             className="input w-auto py-1"
             value={subject}
-            onChange={(e) => setParam({ subject: e.target.value })}
+            onChange={(e) => setParam({ subject: e.target.value, unit: '' })}
           >
             <option value="">모든 과목</option>
             {subjectGroups.map((g, i) => (
@@ -146,7 +155,18 @@ function ResourceList() {
               <option key={t}>{t}</option>
             ))}
           </select>
+          <button onClick={() => setParam({ featured: featured ? '' : '1' })} className={`chip ${featured ? 'chip-on' : ''}`}>
+            ⭐ 추천 자료만
+          </button>
         </div>
+        {unit && (
+          <p className="text-sm text-slate-600">
+            단원: <b>{unit}</b>{' '}
+            <button onClick={() => setParam({ unit: '' })} className="ml-1 text-xs text-brand-700 hover:underline">
+              단원 조건 빼기 ✕
+            </button>
+          </p>
+        )}
       </div>
 
       <div className="mt-5 flex items-center justify-between text-sm text-slate-500">

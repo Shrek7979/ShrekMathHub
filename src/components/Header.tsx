@@ -15,7 +15,9 @@ export function Header() {
 
   const nav = [
     { href: '/resources', label: '자료실' },
+    { href: '/curriculum', label: '교육과정' },
     { href: '/board', label: '게시판' },
+    { href: '/links', label: '링크 모음' },
     ...(isAdmin ? [{ href: '/admin', label: '관리자', badge: pending }] : []),
   ]
 

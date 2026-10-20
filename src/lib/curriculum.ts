@@ -57,4 +57,10 @@ export const RESOURCE_TYPES = [
   '기타',
 ]
 
+/** 관리자만 쓸 수 있는 분류 (데이터베이스 규칙과 같아야 함) */
+export const NOTICE = '공지'
+
+/** 회원이 고를 수 있는 게시판 분류 */
 export const BOARD_CATEGORIES = ['질문', '수업 나눔', '평가·수행평가', '교육과정·연수', '업무·생활', '자유']
+
+export const QUESTION = '질문'
