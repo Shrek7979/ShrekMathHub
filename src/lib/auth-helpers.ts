@@ -11,7 +11,7 @@ export function rememberReturnPath(path = window.location.pathname + window.loca
 }
 
 function safe(p: string | null) {
-  return p && p.startsWith('/') && !p.startsWith('//') ? p : null
+  return p && p.startsWith('/') && !p.startsWith('//') && !p.startsWith('/\\') ? p : null
 }
 
 /** 기억해 둔 화면을 보기만 한다 (지우지 않음) */

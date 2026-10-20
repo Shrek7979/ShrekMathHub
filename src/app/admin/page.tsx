@@ -60,7 +60,7 @@ const STATUS_LABEL: Record<MemberStatus, string> = { pending: '대기', approved
 
 function privOf(m: Member): ProfilePrivate {
   const p = Array.isArray(m.profile_private) ? m.profile_private[0] : m.profile_private
-  return p ?? { email: null, school: null, note: null }
+  return p ?? { email: null, school: null, note: null, provider: null }
 }
 
 function Members({ only }: { only?: MemberStatus }) {
@@ -71,7 +71,7 @@ function Members({ only }: { only?: MemberStatus }) {
   const [q, setQ] = useState('')
 
   const load = useCallback(async () => {
-    let query = supabase.from('profiles').select('*, profile_private(email, school, note)').order('created_at', { ascending: false })
+    let query = supabase.from('profiles').select('*, profile_private(email, school, note, provider)').order('created_at', { ascending: false })
     if (only) query = query.eq('status', only)
     const { data, error } = await query
     setFailed(!!error)
@@ -138,6 +138,13 @@ function Members({ only }: { only?: MemberStatus }) {
                     {STATUS_LABEL[m.status]}
                   </span>
                   {m.status === 'pending' && !p.school && <span className="badge">신청서 작성 전</span>}
+                  {p.provider === 'google' ? (
+                    <span className="badge" title="Google 이 확인한 이메일이에요">Google 가입</span>
+                  ) : (
+                    <span className="badge bg-amber-50 text-amber-800" title="이메일 주소가 진짜 그 사람 것인지 확인되지 않았어요">
+                      이메일 가입 · 주소 확인 안 됨
+                    </span>
+                  )}
                   <span className="ml-auto text-xs text-slate-500" title={fullDate(m.created_at)}>
                     {timeAgo(m.created_at)} 신청
                   </span>

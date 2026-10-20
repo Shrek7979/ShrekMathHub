@@ -26,8 +26,21 @@ create table if not exists public.profile_private (
   id     uuid primary key references public.profiles (id) on delete cascade,
   email  text,
   school text check (char_length(school) <= 100),
-  note   text check (char_length(note) <= 1000)
+  note   text check (char_length(note) <= 1000),
+  provider text  -- 가입 방법: google / email
 );
+
+-- 예전에 만든 데이터베이스: 가입 방법 칸 더하고 채우기
+alter table public.profile_private add column if not exists provider text;
+update public.profile_private p
+   set provider = coalesce(u.raw_app_meta_data ->> 'provider', 'email')
+  from auth.users u
+ where u.id = p.id and p.provider is null;
+
+-- 3) 이름: 빈칸만은 안 되고, 관리자가 아니면 '관리자'·'운영자'를 쓸 수 없다
+alter table public.profiles drop constraint if exists profiles_name_valid;
+alter table public.profiles add constraint profiles_name_valid
+  check (char_length(btrim(name)) >= 1 and (role = 'admin' or name !~ '(관리자|운영자)'));
 
 -- RLS 안에서 쓰는 도우미 (security definer: profiles 의 RLS 를 다시 타지 않게)
 create or replace function public.is_approved() returns boolean
@@ -41,26 +54,53 @@ language sql stable security definer set search_path = '' as $$
                  where id = auth.uid() and status = 'approved' and role = 'admin');
 $$;
 
--- 가입하면 profiles 를 자동으로 만든다. 첫 가입자는 관리자로 바로 승인.
+-- 가입하면 profiles 를 자동으로 만든다. 첫 가입자는 관리자로 바로 승인 (단 한 번).
+create table if not exists public.app_flags (
+  key        text primary key,
+  value      text not null,
+  created_at timestamptz not null default now()
+);
+alter table public.app_flags enable row level security;
+revoke all on public.app_flags from anon, authenticated;
+insert into public.app_flags (key, value)
+  select 'admin_bootstrapped', 'yes' where exists (select 1 from public.profiles where role = 'admin')
+  on conflict (key) do nothing;
+
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare
   meta       jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
   first_user boolean;
+  v_name     text;
 begin
-  select not exists (select 1 from public.profiles) into first_user;
+  -- 두 사람이 동시에 가입해도 관리자가 둘 생기지 않게 차례로
+  perform pg_advisory_xact_lock(hashtext('smh_first_admin'));
+  select not exists (select 1 from public.app_flags where key = 'admin_bootstrapped') into first_user;
+  if first_user then
+    insert into public.app_flags (key, value) values ('admin_bootstrapped', 'yes');
+  end if;
+
+  v_name := left(coalesce(nullif(btrim(meta ->> 'name'), ''), split_part(new.email, '@', 1)), 30);
+  -- 일반 회원 이름에는 '관리자'·'운영자'를 쓸 수 없다 (profiles_name_valid)
+  if not first_user then
+    v_name := btrim(regexp_replace(v_name, '(관리자|운영자)', '', 'g'));
+  end if;
+  if v_name = '' then
+    v_name := left(split_part(new.email, '@', 1), 30);
+  end if;
 
   insert into public.profiles (id, name, school_level, role, status)
   values (
     new.id,
-    left(coalesce(nullif(trim(meta ->> 'name'), ''), split_part(new.email, '@', 1)), 30),
+    v_name,
     case when meta ->> 'school_level' in ('중', '고', '중고') then meta ->> 'school_level' else '고' end,
     case when first_user then 'admin' else 'member' end,
     case when first_user then 'approved' else 'pending' end
   );
 
-  insert into public.profile_private (id, email, school, note)
-  values (new.id, new.email, left(meta ->> 'school', 100), left(meta ->> 'note', 1000));
+  insert into public.profile_private (id, email, school, note, provider)
+  values (new.id, new.email, left(meta ->> 'school', 100), left(meta ->> 'note', 1000),
+          coalesce(new.raw_app_meta_data ->> 'provider', 'email'));
 
   return new;
 end $$;
@@ -214,12 +254,30 @@ begin
   update public.resources set featured = on_off where id = rid;
 end $$;
 
--- 내려받기 횟수 (작성자가 아니어도 +1 만 할 수 있게)
+-- 5) 내려받기 수는 한 사람이 한 자료에 한 번만 센다
+-- 자체 id 를 기본 키로 둔다: (user_id, resource_id) 를 기본 키로 하면 PostgREST 가 이 표를
+-- resources ↔ profiles 의 다대다 연결로 보고 author:profiles(...) 를 모호하다며 거절한다.
+create table if not exists public.downloads (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null references public.profiles (id) on delete cascade,
+  resource_id bigint not null references public.resources (id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  unique (user_id, resource_id)
+);
+alter table public.downloads enable row level security;
+revoke all on public.downloads from anon, authenticated;
+
 create or replace function public.count_download(rid bigint) returns void
-language sql security definer set search_path = '' as $$
-  update public.resources set download_count = download_count + 1
-   where id = rid and public.is_approved();
-$$;
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_approved() then
+    return;
+  end if;
+  insert into public.downloads (user_id, resource_id) values (auth.uid(), rid) on conflict do nothing;
+  if found then
+    update public.resources set download_count = download_count + 1 where id = rid;
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------
 -- 3. 권한 (어떤 칸을 고칠 수 있는지)
@@ -228,6 +286,8 @@ $$;
 revoke all on public.profiles, public.profile_private, public.resources, public.posts,
               public.comments, public.likes, public.bookmarks, public.reports
   from anon, authenticated;
+-- app_flags·downloads 는 함수만 쓴다 (RLS 켜고 정책 없음)
+revoke all on public.app_flags, public.downloads from anon, authenticated;
 
 grant select on public.profiles to authenticated;
 grant update (name, school_level) on public.profiles to authenticated;
@@ -387,10 +447,20 @@ on conflict (id) do update set public = false, file_size_limit = excluded.file_s
 drop policy if exists "자료 파일 받기" on storage.objects;
 create policy "자료 파일 받기" on storage.objects for select to authenticated
   using (bucket_id = 'resources' and public.is_approved());
+-- 6) 회원 한 사람이 올릴 수 있는 파일 수 (관리자는 제한 없음)
+create or replace function public.my_file_count() returns bigint
+language sql stable security definer set search_path = '' as $$
+  select count(*) from storage.objects
+   where bucket_id = 'resources' and name like auth.uid()::text || '/%';
+$$;
+revoke all on function public.my_file_count() from public, anon;
+grant execute on function public.my_file_count() to authenticated;
+
 drop policy if exists "자료 파일 올리기" on storage.objects;
 create policy "자료 파일 올리기" on storage.objects for insert to authenticated
   with check (bucket_id = 'resources' and public.is_approved()
-              and (storage.foldername(name))[1] = auth.uid()::text);
+              and (storage.foldername(name))[1] = auth.uid()::text
+              and (public.is_admin() or public.my_file_count() < 200));
 drop policy if exists "자료 파일 지우기" on storage.objects;
 create policy "자료 파일 지우기" on storage.objects for delete to authenticated
   using (bucket_id = 'resources'
@@ -433,20 +503,20 @@ grant execute on function public.admin_stats() to authenticated;
 -- 7. 안전장치: 자료 파일 정보 검사, 게시판 분류 고정, 파일 형식 제한, 연결 안 된 파일
 -- ---------------------------------------------------------------------
 
--- 자료의 files 칸: 10개 이하, 각 항목은 {path, name, size} 이고 path 는 반드시 "올린 사람 id/" 로 시작
+-- 4) 자료 파일 정보: 경로는 사이트가 만드는 모양만, 확장자는 정해진 것만, 보이지 않는 글자 금지
 create or replace function public.valid_files(f jsonb, owner uuid) returns boolean
 language sql immutable set search_path = '' as $$
   select jsonb_typeof(f) = 'array'
      and jsonb_array_length(f) <= 10
      and coalesce((
-       -- 칸이 빠져 결과가 NULL 이면 통과가 아니라 거절로 친다
        select bool_and(coalesce(
                 jsonb_typeof(e) = 'object'
             and jsonb_typeof(e -> 'path') = 'string'
-            and starts_with(e ->> 'path', owner::text || '/')
-            and position('..' in (e ->> 'path')) = 0
+            and (e ->> 'path') ~ ('^' || owner::text || '/[0-9a-f-]{36}(\.[a-z0-9]{1,8})?$')
             and jsonb_typeof(e -> 'name') = 'string'
             and char_length(e ->> 'name') between 1 and 200
+            and lower(e ->> 'name') ~ '\.(hwp|hwpx|hwt|pdf|ppt|pptx|pps|ppsx|key|show|cell|doc|docx|xls|xlsx|csv|txt|md|tex|ggb|png|jpg|jpeg|gif|webp|zip|mp3|m4a|mp4|ipynb|py)$'
+            and (e ->> 'name') !~ ('[[:cntrl:]' || chr(8203) || '-' || chr(8207) || chr(8234) || '-' || chr(8238) || chr(8294) || '-' || chr(8297) || ']')
             and jsonb_typeof(e -> 'size') = 'number', false))
          from jsonb_array_elements(f) e), true);
 $$;

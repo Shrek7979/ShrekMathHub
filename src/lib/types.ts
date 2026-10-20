@@ -15,6 +15,8 @@ export type ProfilePrivate = {
   email: string | null
   school: string | null
   note: string | null
+  /** 가입 방법: google / email */
+  provider?: string | null
 }
 
 export type FileInfo = {

@@ -12,6 +12,7 @@ export function useDraft<T extends object>(key: string, value: T, restore: (v: T
   const [restored, setRestored] = useState(false)
   const dirty = useRef(false)
   const first = useRef(true)
+  const justRestored = useRef(false)
 
   // 처음 한 번: 저장된 것이 있으면 불러오기
   useEffect(() => {
@@ -19,6 +20,7 @@ export function useDraft<T extends object>(key: string, value: T, restore: (v: T
     try {
       const raw = localStorage.getItem(key)
       if (raw) {
+        justRestored.current = true
         restore(JSON.parse(raw) as T)
         setRestored(true)
       }
@@ -30,8 +32,9 @@ export function useDraft<T extends object>(key: string, value: T, restore: (v: T
   const json = JSON.stringify(value)
   useEffect(() => {
     if (!enabled) return
-    if (first.current) {
+    if (first.current || justRestored.current) {
       first.current = false
+      justRestored.current = false
       return
     }
     dirty.current = true

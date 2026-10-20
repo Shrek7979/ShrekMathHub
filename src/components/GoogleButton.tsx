@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { inAppBrowser, openInExternalBrowser, peekReturnPath } from '@/lib/auth-helpers'
+import { inAppBrowser, openInExternalBrowser, takeReturnPath } from '@/lib/auth-helpers'
 import { koError } from '@/lib/format'
 import { NOT_CONFIGURED_MESSAGE, SUPABASE_KEY, SUPABASE_URL, isConfigured, supabase } from '@/lib/supabase'
 
@@ -29,7 +29,7 @@ export function GoogleButton({ label = 'Google로 계속하기' }: { label?: str
     }
     // 로그인하고 돌아올 곳: 지금 보던 화면 (로그인·가입 화면에서 눌렀다면 그 전에 보던 화면)
     const here = window.location.pathname + window.location.search
-    const back = /^\/(login|signup)/.test(window.location.pathname) ? (peekReturnPath() ?? '/') : here
+    const back = /^\/(login|signup)/.test(window.location.pathname) ? (takeReturnPath() ?? '/') : here
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

@@ -32,7 +32,7 @@ export function ResourceForm({ initial }: { initial?: Resource }) {
   const [agreePrivacy, setAgreePrivacy] = useState(!!initial)
   // 새 자료는 적던 글을 임시 저장 (파일은 저장할 수 없어서 다시 골라야 함)
   const draft = useDraft(
-    'smh-draft-resource',
+    `smh-draft-resource:${session?.user.id ?? ''}`,
     { title, level, subject, unit, type, description, link },
     (d) => {
       setTitle(d.title ?? '')

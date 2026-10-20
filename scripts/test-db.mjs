@@ -14,7 +14,7 @@ const SUPABASE_STUBS = `
 
   create schema auth;
   grant usage on schema auth to anon, authenticated;
-  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb);
+  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb, raw_app_meta_data jsonb);
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant execute on function auth.uid() to anon, authenticated;
@@ -81,8 +81,12 @@ async function fails(promise, pattern) {
   throw new Error('막혀야 하는데 통과됨')
 }
 
-const signUp = (id, email, meta) =>
-  db.query('insert into auth.users (id, email, raw_user_meta_data) values ($1, $2, $3)', [id, email, meta])
+const signUp = (id, email, meta, provider = 'email') =>
+  db.query('insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values ($1, $2, $3, $4)', [
+    id, email, meta, { provider },
+  ])
+// 사이트가 실제로 만드는 파일 경로 모양: "<올린 사람 id>/<uuid>.<확장자>"
+const fpath = (owner, ext = 'pdf') => `${owner}/${crypto.randomUUID()}.${ext}`
 
 console.log('\n회원가입·승인')
 await signUp(A, 'admin@test.kr', { name: '관리자' })
@@ -114,9 +118,9 @@ await test('관리자는 자기 자신을 바꿀 수 없음', async () => {
 })
 const G = '00000000-0000-0000-0000-00000000000d' // Google 로 처음 들어온 선생님
 await test('Google 로그인: 구글 이름으로 대기 회원이 되고, 신청서(학교·메모)는 비어 있음', async () => {
-  await signUp(G, 'park@gmail.com', { name: '박구글', full_name: '박구글', avatar_url: 'https://x/y.png', email_verified: true })
+  await signUp(G, 'park@gmail.com', { name: '박구글', full_name: '박구글', avatar_url: 'https://x/y.png', email_verified: true }, 'google')
   eq(await one(G, 'select name, status from profiles where id = $1', [G]), { name: '박구글', status: 'pending' })
-  eq(await one(G, 'select school, note from profile_private where id = $1', [G]), { school: null, note: null })
+  eq(await one(G, 'select school, note, provider from profile_private where id = $1', [G]), { school: null, note: null, provider: 'google' })
 })
 await test('대기 회원이 가입 신청서를 직접 채울 수 있음 (승인 상태는 그대로)', async () => {
   await as(G, `update profiles set name = '박수학', school_level = '중고' where id = $1`, [G])
@@ -165,9 +169,12 @@ await test('내 자료는 고칠 수 있고 수정 시각이 바뀜', async () =
 await test('내려받기 수: 승인 회원은 +1, 대기 회원은 무시, 수정 시각은 그대로', async () => {
   const before = await one(A, 'select updated_at from resources where id = $1', [rA.id])
   await as(B, 'select count_download($1)', [rA.id])
+  await as(B, 'select count_download($1)', [rA.id]) // 같은 사람이 또 받아도 한 번만
+  await as(B, 'select count_download($1)', [rA.id])
   await as(C, 'select count_download($1)', [rA.id])
   const after = await one(A, 'select download_count, updated_at from resources where id = $1', [rA.id])
   eq(after.download_count, 1)
+  await fails(as(B, 'select * from downloads'), /permission denied/)
   eq(String(after.updated_at), String(before.updated_at))
 })
 await test('로그인 안 한 사람은 아무것도 못 봄', async () => {
@@ -241,11 +248,44 @@ await test('자료 파일 정보: 이상한 항목·남의 경로는 거절, 내
   const ins2 = (files) => as(B, `insert into resources (title, school_level, subject, resource_type, files)
                                   values ('f', '고', '대수', '기타', $1) returning id`, [JSON.stringify(files)])
   await fails(ins2([null]), /resources_files_valid/)
-  await fails(ins2([{ path: `${A}/x.pdf`, name: 'x.pdf', size: 1 }]), /resources_files_valid/)
+  await fails(ins2([{ path: fpath(A), name: 'x.pdf', size: 1 }]), /resources_files_valid/)
   await fails(ins2([{ path: `${B}/../${A}/x.pdf`, name: 'x.pdf', size: 1 }]), /resources_files_valid/)
-  await fails(ins2([{ path: `${B}/x.pdf`, name: 'x.pdf' }]), /resources_files_valid/)
-  const ok = (await ins2([{ path: `${B}/x.pdf`, name: '이차함수.pdf', size: 1234, type: 'application/pdf' }])).rows[0]
+  await fails(ins2([{ path: `${B}/%2e%2e/x6/auth/v1/logout`, name: 'x.pdf', size: 1 }]), /resources_files_valid/)
+  await fails(ins2([{ path: `${B}/x.pdf`, name: 'x.pdf', size: 1 }]), /resources_files_valid/) // 사이트가 만드는 모양 아님
+  await fails(ins2([{ path: fpath(B), name: 'x.pdf' }]), /resources_files_valid/)
+  const ok = (await ins2([{ path: fpath(B), name: '이차함수.pdf', size: 1234, type: 'application/pdf' }])).rows[0]
   if (!ok?.id) throw new Error('정상 파일이 거절됨')
+})
+await test('실행 파일·숨은 글자로 속인 이름은 거절, HWP 등 수업 자료는 통과', async () => {
+  const ins2 = (name) => as(B, `insert into resources (title, school_level, subject, resource_type, files)
+                                 values ('f', '고', '대수', '기타', $1) returning id`, [JSON.stringify([{ path: fpath(B, 'bin'), name, size: 1 }])])
+  await fails(ins2('lesson.pdf.exe'), /resources_files_valid/)
+  await fails(ins2('x.hta'), /resources_files_valid/)
+  await fails(ins2('사진\u202Egpj.exe'), /resources_files_valid/) // 오른쪽→왼쪽 글자로 .exe 를 .jpg 처럼
+  await fails(ins2('보고서\u202Efdp.png'), /resources_files_valid/) // 확장자가 맞아도 방향 바꾸는 글자는 안 됨
+  await fails(ins2('a\u0007b.pdf'), /resources_files_valid/) // 제어 문자
+  for (const n of ['2학기 기말.HWP', '활동지.hwpx', '수업.pptx', 'GeoGebra 탐구.ggb', '설명서.pdf']) {
+    if (!(await ins2(n)).rows[0]?.id) throw new Error(`거절되면 안 됨: ${n}`)
+  }
+})
+await test('이름: 빈칸만은 안 되고, 회원은 관리자·운영자 이름 못 씀', async () => {
+  await fails(as(B, `update profiles set name = '   ' where id = $1`, [B]), /profiles_name_valid/)
+  await fails(as(B, `update profiles set name = '관리자' where id = $1`, [B]), /profiles_name_valid/)
+  await fails(as(B, `update profiles set name = '사이트 운영자 김' where id = $1`, [B]), /profiles_name_valid/)
+  eq((await rows(B, `update profiles set name = '김수학' where id = $1 returning name`, [B])).length, 1)
+})
+await test('가입할 때 이름에 관리자를 넣어도 일반 회원은 빠짐', async () => {
+  const X = '00000000-0000-0000-0000-0000000000e1'
+  await signUp(X, 'fake@test.kr', { name: '관리자' })
+  const p = await one(X, 'select name, role, status from profiles where id = $1', [X])
+  eq([p.role, p.status, p.name.includes('관리자')], ['member', 'pending', false])
+})
+await test('회원 한 사람의 파일은 200개까지, 관리자는 제한 없음', async () => {
+  const many = Array.from({ length: 200 }, () => `('resources', '${fpath(B)}')`).join(',')
+  await db.query(`insert into storage.objects (bucket_id, name) values ${many}`)
+  await fails(as(B, `insert into storage.objects (bucket_id, name) values ('resources', $1)`, [fpath(B)]), /row-level security/)
+  await as(A, `insert into storage.objects (bucket_id, name) values ('resources', $1)`, [fpath(A)])
+  await db.query(`delete from storage.objects where name like $1`, [`${B}/%`])
 })
 await test('게시판 분류는 정해진 것만 (가짜 공지 막기)', async () => {
   await fails(as(B, `insert into posts (category, title, body) values ('📢 공지', '가짜', 'x')`), /posts_category_valid/)
@@ -297,6 +337,13 @@ await test('승인 회원은 대기 회원 이름을 못 봄', async () => {
   await as(A, `select admin_set_member($1, 'approved')`, [B])
   const names = (await rows(B, 'select name from profiles order by name')).map((r) => r.name)
   eq(names, ['관리자', '김수학'])
+})
+await test('회원을 모두 지워도 다음 가입자가 관리자가 되지 않음 (첫 관리자는 한 번만)', async () => {
+  await db.query('delete from auth.users')
+  eq((await db.query('select count(*)::int as n from profiles')).rows[0].n, 0)
+  const Y = '00000000-0000-0000-0000-0000000000f1'
+  await signUp(Y, 'stranger@test.kr', { name: '누군가' })
+  eq(await one(Y, 'select role, status from profiles where id = $1', [Y]), { role: 'member', status: 'pending' })
 })
 
 console.log(`\n${passed}개 통과, ${failed}개 실패\n`)

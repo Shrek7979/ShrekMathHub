@@ -23,7 +23,7 @@ export function CommentSection({ target }: { target: Target }) {
   const load = useCallback(async () => {
     const { data, error } = await supabase
       .from('comments')
-      .select('*, author:profiles(name, role)')
+      .select('*, author:profiles!author_id(name, role)')
       .eq(key, id)
       .order('created_at', { ascending: true })
     setFailed(!!error)

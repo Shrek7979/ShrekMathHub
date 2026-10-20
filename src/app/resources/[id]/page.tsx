@@ -45,11 +45,14 @@ function Detail() {
     if (!Number.isInteger(rid) || rid <= 0) return setR(null)
     supabase
       .from('resources')
-      .select('*, author:profiles(name, role)')
+      .select('*, author:profiles!author_id(name, role)')
       .eq('id', rid)
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error) return setFailed(true)
+        if (error) {
+          console.error('[자료 불러오기 실패]', error)
+          return setFailed(true)
+        }
         const row = data as Resource | null
         // 파일 정보가 이상한 항목은 빼고 보여 준다
         setR(row ? { ...row, files: (row.files ?? []).filter((f) => f && typeof f.path === 'string' && typeof f.name === 'string') } : null)

@@ -58,6 +58,8 @@ export function koError(e: unknown): string {
   if (/mime type|invalid_mime/i.test(msg)) return '올릴 수 없는 파일 형식이에요.'
   if (/Object not found/i.test(msg)) return '파일을 찾을 수 없어요. 지워졌을 수 있어요.'
   if (/Cannot coerce|multiple \(or no\) rows|PGRST116/i.test(msg)) return '권한이 없거나 이미 지워진 내용이에요.'
+  if (/profiles_name_valid/i.test(msg)) return "이름이 비었거나 '관리자'·'운영자'가 들어 있어요. 다른 이름을 써 주세요."
+  if (/resources_files_valid/i.test(msg)) return '올릴 수 없는 파일이 섞여 있어요. 파일 이름과 형식을 확인해 주세요.'
   if (/check constraint/i.test(msg)) return '입력한 내용의 길이나 형식이 맞지 않아요. 다시 확인해 주세요.'
   if (/JWT|refresh token|session/i.test(msg)) return '로그인이 만료됐어요. 다시 로그인해 주세요.'
   // 데이터베이스에서 보낸 한국어 안내는 그대로, 그 밖의 영어 오류는 쉬운 말 + 참고용 원문

@@ -14,7 +14,7 @@ import { DraftNotice, ErrorBox } from './ui'
 /** 게시판 글쓰기 / 고치기 */
 export function PostForm({ initial, defaultCategory, defaultTitle }: { initial?: Post; defaultCategory?: string; defaultTitle?: string }) {
   const router = useRouter()
-  const { isAdmin } = useAuth()
+  const { isAdmin, session } = useAuth()
   // 공지는 관리자만 (데이터베이스 규칙도 같은 내용으로 막고 있음)
   const categories = isAdmin ? [NOTICE, ...BOARD_CATEGORIES] : BOARD_CATEGORIES
   const [category, setCategory] = useState(
@@ -26,7 +26,7 @@ export function PostForm({ initial, defaultCategory, defaultTitle }: { initial?:
   const [busy, setBusy] = useState(false)
   // 새 글은 쓰는 동안 이 브라우저에 임시 저장 (고치기·자료 요청 글은 제외)
   const draft = useDraft(
-    'smh-draft-post',
+    `smh-draft-post:${session?.user.id ?? ''}`,
     { category, title, body },
     (d) => {
       if (categories.includes(d.category)) setCategory(d.category)

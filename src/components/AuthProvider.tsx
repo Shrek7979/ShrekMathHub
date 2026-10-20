@@ -71,6 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profileError,
     refreshProfile,
     signOut: async () => {
+      // 학교 공용 PC 에서 다음 선생님에게 쓰던 글이 보이지 않게
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('smh-draft-'))
+          .forEach((k) => localStorage.removeItem(k))
+      } catch {}
       await supabase.auth.signOut()
     },
   }

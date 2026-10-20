@@ -5,9 +5,9 @@ import { timeAgo } from '@/lib/format'
 import { countOf, type Post, type Resource } from '@/lib/types'
 
 export const RESOURCE_LIST_COLUMNS =
-  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, featured, created_at, author:profiles(name, role), likes(count), comments(count)'
+  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, featured, created_at, author:profiles!author_id(name, role), likes(count), comments(count)'
 
-export const POST_LIST_COLUMNS = 'id, category, title, solved, created_at, author:profiles(name, role), likes(count), comments(count)'
+export const POST_LIST_COLUMNS = 'id, category, title, solved, created_at, author:profiles!author_id(name, role), likes(count), comments(count)'
 
 /** 작성자 이름 (관리자는 표시를 붙여 사칭과 구분) */
 export function AuthorName({ author }: { author?: { name: string; role?: string } | null }) {

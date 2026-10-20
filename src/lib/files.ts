@@ -60,7 +60,12 @@ export async function uploadFile(userId: string, file: File): Promise<FileInfo> 
     upsert: false,
   })
   if (error) throw error
-  return { path, name: shortName(file.name), size: file.size, type }
+  return { path, name: shortName(cleanName(file.name)), size: file.size, type }
+}
+
+/** 눈에 안 보이는 제어 문자·글자 방향 바꾸는 문자를 뺀다 (데이터베이스도 이런 이름은 거절) */
+export function cleanName(name: string) {
+  return name.replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, '').trim() || 'file'
 }
 
 /** 데이터베이스는 파일 이름을 200자까지 받는다 — 넘으면 확장자는 남기고 줄인다 */

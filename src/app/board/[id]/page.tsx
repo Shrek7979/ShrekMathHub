@@ -39,7 +39,7 @@ function Detail() {
     if (!Number.isInteger(pid) || pid <= 0) return setP(null)
     supabase
       .from('posts')
-      .select('*, author:profiles(name, role)')
+      .select('*, author:profiles!author_id(name, role)')
       .eq('id', pid)
       .maybeSingle()
       .then(({ data, error }) => (error ? setFailed(true) : setP((data as Post | null) ?? null)))

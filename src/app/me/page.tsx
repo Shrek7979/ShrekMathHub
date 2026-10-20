@@ -63,7 +63,7 @@ type Received = {
 function ReceivedComments() {
   const uid = useAuth().session?.user.id
   const { data: items, failed, retry } = useQuery<Received[]>(async () => {
-    const base = 'id, body, created_at, author:profiles(name, role)'
+    const base = 'id, body, created_at, author:profiles!author_id(name, role)'
     const [a, b] = await Promise.all([
       supabase
         .from('comments')
