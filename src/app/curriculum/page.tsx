@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
-import { Spinner } from '@/components/ui'
+import { LoadError, Spinner } from '@/components/ui'
 import { SUBJECTS, UNIT_HINTS } from '@/lib/curriculum'
 import { supabase } from '@/lib/supabase'
 import type { SchoolLevel } from '@/lib/types'
@@ -24,11 +24,17 @@ function CurriculumMap() {
   const { profile } = useAuth()
   const [level, setLevel] = useState<SchoolLevel>(profile?.school_level === '중' ? '중' : '고')
   const [rows, setRows] = useState<Row[] | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
-    supabase.rpc('resource_counts').then(({ data }) => setRows(((data as Row[]) ?? []).map((r) => ({ ...r, n: Number(r.n) }))))
-  }, [])
+    setFailed(false)
+    supabase.rpc('resource_counts').then(({ data, error }) =>
+      error ? setFailed(true) : setRows(((data as Row[]) ?? []).map((r) => ({ ...r, n: Number(r.n) }))),
+    )
+  }, [reload])
 
+  if (failed) return <LoadError onRetry={() => setReload((n) => n + 1)} />
   if (!rows) return <Spinner />
 
   const mine = rows.filter((r) => r.school_level === level)
@@ -109,7 +115,7 @@ function SubjectCard({ level, subject, rows }: { level: SchoolLevel; subject: st
               </li>
             )
           })}
-          {noUnit > 0 && <li className="px-1 py-0.5 text-xs text-slate-400">단원 미지정 {noUnit}</li>}
+          {noUnit > 0 && <li className="px-1 py-0.5 text-xs text-slate-500">단원 미지정 {noUnit}</li>}
         </ul>
       )}
     </div>

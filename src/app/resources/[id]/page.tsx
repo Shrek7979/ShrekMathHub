@@ -7,11 +7,11 @@ import { useAuth } from '@/components/AuthProvider'
 import { CommentSection } from '@/components/CommentSection'
 import { FilePreview, canPreview } from '@/components/FilePreview'
 import { Gate } from '@/components/Gate'
-import { RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
+import { AuthorName, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
 import { Markdown } from '@/components/Markdown'
 import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
-import { Empty, Spinner } from '@/components/ui'
+import { Empty, LoadError, Spinner } from '@/components/ui'
 import { LEVEL_LABEL } from '@/lib/curriculum'
 import { embedOf } from '@/lib/embed'
 import { downloadFile, extOf, removeFiles } from '@/lib/files'
@@ -35,16 +35,33 @@ function Detail() {
   const [r, setR] = useState<Resource | null | undefined>(undefined)
   const [busyFile, setBusyFile] = useState<string | null>(null)
   const [openPreview, setOpenPreview] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
+    setFailed(false)
     supabase
       .from('resources')
-      .select('*, author:profiles(name)')
+      .select('*, author:profiles(name, role)')
       .eq('id', rid)
       .maybeSingle()
-      .then(({ data }) => setR((data as Resource | null) ?? null))
-  }, [rid])
+      .then(({ data, error }) => {
+        if (error) return setFailed(true)
+        const row = data as Resource | null
+        // 파일 정보가 이상한 항목은 빼고 보여 준다
+        setR(row ? { ...row, files: (row.files ?? []).filter((f) => f && typeof f.path === 'string' && typeof f.name === 'string') } : null)
+      })
+  }, [rid, reload])
 
+  if (failed)
+    return (
+      <LoadError
+        onRetry={() => {
+          setR(undefined)
+          setReload((n) => n + 1)
+        }}
+      />
+    )
   if (r === undefined) return <Spinner />
   if (r === null)
     return (
@@ -79,7 +96,7 @@ function Detail() {
     if (!r || !confirm('이 자료를 지울까요? 첨부 파일과 댓글도 함께 지워져요.')) return
     const { error } = await supabase.from('resources').delete().eq('id', r.id)
     if (error) return alert(koError(error))
-    await removeFiles(r.files.map((f) => f.path))
+    await removeFiles(r.files.map((f) => f.path), r.author_id)
     router.replace('/resources')
   }
 
@@ -116,7 +133,7 @@ function Detail() {
         <h1 className="mt-2 text-2xl font-bold leading-snug text-slate-900">{r.title}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
           <Link href={`/teachers/${r.author_id}`} className="font-bold text-slate-700 hover:text-brand-700">
-            {r.author?.name ?? '알 수 없음'}
+            <AuthorName author={r.author} />
           </Link>
           <span>{fullDate(r.created_at)}</span>
           {r.updated_at.slice(0, 16) !== r.created_at.slice(0, 16) && <span className="text-xs">(고침 {fullDate(r.updated_at)})</span>}
@@ -134,7 +151,7 @@ function Detail() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-slate-800">{f.name}</p>
-                  <p className="text-xs text-slate-400">{fileSize(f.size)}</p>
+                  <p className="text-xs text-slate-500">{fileSize(f.size)}</p>
                 </div>
                 {canPreview(f) && (
                   <button
@@ -161,7 +178,7 @@ function Detail() {
             >
               <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-md bg-brand-50 text-base">🔗</span>
               <span className="min-w-0 flex-1 truncate text-brand-700">{r.link_url}</span>
-              <span className="text-xs text-slate-400">새 창 ↗</span>
+              <span className="text-xs text-slate-500">새 창 ↗</span>
             </a>
           )}
         </section>

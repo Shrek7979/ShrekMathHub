@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { koError } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 
@@ -16,6 +16,13 @@ export function ReportButton(props: Props) {
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
 
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
   async function submit() {
     setBusy(true)
     const { error } = await supabase.from('reports').insert({
@@ -30,11 +37,11 @@ export function ReportButton(props: Props) {
     setOpen(false)
   }
 
-  if (done) return <span className="text-xs text-slate-400">신고했어요</span>
+  if (done) return <span className="text-xs text-slate-500">신고했어요</span>
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="text-xs text-slate-400 hover:text-red-500">
+      <button onClick={() => setOpen(true)} className="text-xs text-slate-500 hover:text-red-500">
         신고
       </button>
       {open && (
@@ -42,8 +49,10 @@ export function ReportButton(props: Props) {
           className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
           onClick={() => setOpen(false)}
         >
-          <div className="card w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <h2 className="font-bold text-slate-900">관리자에게 알리기</h2>
+          <div className="card w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="report-title">
+            <h2 className="font-bold text-slate-900" id="report-title">
+              관리자에게 알리기
+            </h2>
             <p className="mt-1 text-xs text-slate-500">작성자에게는 누가 신고했는지 보이지 않아요.</p>
             <div className="mt-4 space-y-2">
               {REASONS.map((r) => (

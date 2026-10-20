@@ -21,10 +21,11 @@ const SUPABASE_STUBS = `
 
   create schema storage;
   grant usage on schema storage to anon, authenticated;
-  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint);
+  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint,
+    allowed_mime_types text[]);
   create table storage.objects (
     id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid default auth.uid(),
-    metadata jsonb);
+    metadata jsonb, created_at timestamptz default now());
   alter table storage.objects enable row level security;
   grant select, insert, update, delete on storage.objects to anon, authenticated;
   create function storage.foldername(name text) returns text[] language sql immutable as
@@ -235,6 +236,34 @@ await test('관리자 통계는 관리자만', async () => {
   eq(typeof s.storage_bytes, 'number')
 })
 
+console.log('\n안전장치')
+await test('자료 파일 정보: 이상한 항목·남의 경로는 거절, 내 경로는 통과', async () => {
+  const ins2 = (files) => as(B, `insert into resources (title, school_level, subject, resource_type, files)
+                                  values ('f', '고', '대수', '기타', $1) returning id`, [JSON.stringify(files)])
+  await fails(ins2([null]), /resources_files_valid/)
+  await fails(ins2([{ path: `${A}/x.pdf`, name: 'x.pdf', size: 1 }]), /resources_files_valid/)
+  await fails(ins2([{ path: `${B}/../${A}/x.pdf`, name: 'x.pdf', size: 1 }]), /resources_files_valid/)
+  await fails(ins2([{ path: `${B}/x.pdf`, name: 'x.pdf' }]), /resources_files_valid/)
+  const ok = (await ins2([{ path: `${B}/x.pdf`, name: '이차함수.pdf', size: 1234, type: 'application/pdf' }])).rows[0]
+  if (!ok?.id) throw new Error('정상 파일이 거절됨')
+})
+await test('게시판 분류는 정해진 것만 (가짜 공지 막기)', async () => {
+  await fails(as(B, `insert into posts (category, title, body) values ('📢 공지', '가짜', 'x')`), /posts_category_valid/)
+})
+await test('파일 저장소는 정해진 형식만 받도록 설정됨', async () => {
+  const b = (await db.query(`select allowed_mime_types from storage.buckets where id = 'resources'`)).rows[0]
+  if (!b.allowed_mime_types.includes('application/pdf') || b.allowed_mime_types.includes('text/html'))
+    throw new Error(JSON.stringify(b))
+})
+await test('연결 안 된 파일 찾기: 관리자만, 하루 지난 것만', async () => {
+  await db.query(`insert into storage.objects (bucket_id, name, owner, created_at) values
+    ('resources', $1, $2, now() - interval '2 days'), ('resources', $3, $2, now())`, [`${B}/old-orphan.pdf`, B, `${B}/new-upload.pdf`])
+  await fails(as(B, 'select * from admin_orphan_files()'), /관리자만/)
+  const names = (await rows(A, 'select * from admin_orphan_files() as name')).map((r) => r.name)
+  eq(names.includes(`${B}/old-orphan.pdf`), true)
+  eq(names.includes(`${B}/new-upload.pdf`), false)
+})
+
 console.log('\n신고')
 await test('승인 회원이 신고, 관리자만 처리', async () => {
   const r = await one(B, `insert into reports (resource_id, reason) values ($1, '저작권') returning id`, [rA.id])
@@ -250,7 +279,7 @@ await test('내 폴더에만 올릴 수 있음', async () => {
 })
 await test('대기 회원은 파일을 못 받음', async () => {
   eq(await rows(C, 'select name from storage.objects'), [])
-  eq((await rows(A, 'select name from storage.objects')).length, 1)
+  eq((await rows(A, 'select name from storage.objects')).length > 0, true)
 })
 await test('남의 파일은 못 지우지만 관리자는 지울 수 있음', async () => {
   await as(A, `insert into storage.objects (bucket_id, name) values ('resources', $1)`, [`${A}/c.pdf`])

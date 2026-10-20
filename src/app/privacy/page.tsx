@@ -72,7 +72,7 @@ export default function PrivacyPage() {
           </section>
         ))}
       </div>
-      <p className="mt-6 text-xs text-slate-400">시행일: 2026년 10월 20일</p>
+      <p className="mt-6 text-xs text-slate-500">시행일: 2026년 10월 20일</p>
     </article>
   )
 }

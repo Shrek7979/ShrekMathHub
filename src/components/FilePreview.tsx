@@ -9,35 +9,68 @@ import type { FileInfo } from '@/lib/types'
 const IMAGE = ['png', 'jpg', 'jpeg', 'gif', 'webp']
 const AUDIO = ['mp3', 'm4a']
 const VIDEO = ['mp4']
-const FRAME = ['pdf', 'txt']
+const TEXT = ['txt', 'md', 'csv', 'tex', 'py']
+const PDF = ['pdf']
 
-export const canPreview = (f: FileInfo) => [...IMAGE, ...AUDIO, ...VIDEO, ...FRAME].includes(extOf(f.name))
+export const canPreview = (f: FileInfo) => [...IMAGE, ...AUDIO, ...VIDEO, ...TEXT, ...PDF].includes(extOf(f.name))
 
 /** 자료 화면 안에서 펼쳐 보는 미리보기 (열 때만 내려받아서 전송량을 아낀다) */
 export function FilePreview({ file }: { file: FileInfo }) {
+  const ext = extOf(file.name)
   const [url, setUrl] = useState<string | null>(null)
+  const [text, setText] = useState<string | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(file.path, 60 * 60)
-      .then(({ data, error }) => (error || !data ? setError(koError(error)) : setUrl(data.signedUrl)))
-  }, [file.path])
+    let cancelled = false
+    async function load() {
+      const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(file.path, 60 * 60)
+      if (cancelled) return
+      if (error || !data) return setError(koError(error))
+      if (!TEXT.includes(ext)) return setUrl(data.signedUrl)
+      // 글 파일은 직접 읽어서 보여 준다 (UTF-8 이 아니면 학교에서 흔한 EUC-KR 로)
+      const buf = await (await fetch(data.signedUrl)).arrayBuffer()
+      if (cancelled) return
+      let decoded: string
+      try {
+        decoded = new TextDecoder('utf-8', { fatal: true }).decode(buf)
+      } catch {
+        decoded = new TextDecoder('euc-kr').decode(buf)
+      }
+      setText(decoded.slice(0, 200_000))
+    }
+    load().catch((e) => !cancelled && setError(koError(e)))
+    return () => {
+      cancelled = true
+    }
+  }, [file.path, ext])
 
-  if (error) return <p className="px-4 py-3 text-sm text-red-600">{error}</p>
-  if (!url) return <p className="px-4 py-3 text-sm text-slate-400">미리보기를 불러오는 중…</p>
+  if (error) return <p className="border-t border-slate-100 px-4 py-3 text-sm text-red-600">{error}</p>
+  if (!url && text === null) return <p className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">미리보기를 불러오는 중…</p>
 
-  const ext = extOf(file.name)
   return (
     <div className="border-t border-slate-100 bg-slate-50 p-3">
-      {IMAGE.includes(ext) && (
+      {text !== null && (
+        <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed text-slate-800">
+          {text}
+        </pre>
+      )}
+      {url && IMAGE.includes(ext) && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt={file.name} className="mx-auto max-h-[70vh] rounded-md bg-white" />
       )}
-      {AUDIO.includes(ext) && <audio src={url} controls className="w-full" />}
-      {VIDEO.includes(ext) && <video src={url} controls className="max-h-[70vh] w-full rounded-md bg-black" />}
-      {FRAME.includes(ext) && <iframe src={url} title={file.name} className="h-[70vh] w-full rounded-md border border-slate-200 bg-white" />}
+      {url && AUDIO.includes(ext) && <audio src={url} controls className="w-full" />}
+      {url && VIDEO.includes(ext) && <video src={url} controls className="max-h-[70vh] w-full rounded-md bg-black" />}
+      {url && PDF.includes(ext) && (
+        <>
+          <iframe src={url} title={file.name} className="h-[70vh] w-full rounded-md border border-slate-200 bg-white" />
+          <p className="mt-2 text-right text-xs">
+            <a href={url} target="_blank" rel="noopener noreferrer" className="text-slate-500 underline hover:text-slate-800">
+              새 창에서 크게 보기 ↗
+            </a>
+          </p>
+        </>
+      )}
     </div>
   )
 }

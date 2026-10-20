@@ -12,12 +12,12 @@ export function Markdown({ children, small = false }: { children: string; small?
     <div
       className={`prose prose-slate max-w-none prose-a:text-brand-700 prose-pre:bg-slate-800 ${
         small ? 'prose-sm' : ''
-      } prose-p:my-2 prose-li:my-0.5`}
+      } overflow-x-auto prose-p:my-2 prose-li:my-0.5`}
     >
       <ReactMarkdown
         // "1~3단원" 같은 물결표가 취소선이 되지 않도록 singleTilde 끔
         remarkPlugins={[[remarkGfm, { singleTilde: false }], remarkMath, remarkBreaks]}
-        rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: false }]]}
+        rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: false, maxSize: 20, maxExpand: 200 }]]}
         components={{
           a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
         }}

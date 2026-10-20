@@ -5,6 +5,7 @@ import { koError, timeAgo } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { targetColumns, type Comment, type Target } from '@/lib/types'
 import { useAuth } from './AuthProvider'
+import { AuthorName } from './ListItems'
 import { Markdown } from './Markdown'
 import { ReportButton } from './ReportButton'
 
@@ -20,7 +21,7 @@ export function CommentSection({ target }: { target: Target }) {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from('comments')
-      .select('*, author:profiles(name)')
+      .select('*, author:profiles(name, role)')
       .eq(key, id)
       .order('created_at', { ascending: true })
     setComments((data as Comment[]) ?? [])
@@ -32,7 +33,7 @@ export function CommentSection({ target }: { target: Target }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!body.trim()) return
+    if (!body.trim() || busy) return
     setBusy(true)
     const { error } = await supabase.from('comments').insert({ ...cols, body: body.trim() })
     setBusy(false)
@@ -58,12 +59,14 @@ export function CommentSection({ target }: { target: Target }) {
         {comments?.map((c) => (
           <li key={c.id} className="card px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <b className="text-slate-700">{c.author?.name ?? '알 수 없음'}</b>
+              <b className="text-slate-700">
+                <AuthorName author={c.author} />
+              </b>
               <span>{timeAgo(c.created_at)}</span>
               <span className="ml-auto flex items-center gap-3">
                 {c.author_id !== uid && <ReportButton commentId={c.id} />}
                 {(c.author_id === uid || isAdmin) && (
-                  <button onClick={() => remove(c)} className="text-xs text-slate-400 hover:text-red-500">
+                  <button onClick={() => remove(c)} className="text-xs text-slate-500 hover:text-red-500">
                     삭제
                   </button>
                 )}
@@ -90,7 +93,7 @@ export function CommentSection({ target }: { target: Target }) {
           }}
         />
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-xs text-slate-400">Ctrl+Enter 로 바로 등록</span>
+          <span className="text-xs text-slate-500">Ctrl+Enter 로 바로 등록</span>
           <button className="btn-primary btn-sm" disabled={busy || !body.trim()}>
             댓글 등록
           </button>

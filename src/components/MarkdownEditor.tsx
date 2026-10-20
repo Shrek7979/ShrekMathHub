@@ -26,9 +26,11 @@ type Props = {
   placeholder?: string
   rows?: number
   id?: string
+  /** 데이터베이스 글자 수 한도와 같게 */
+  maxLength?: number
 }
 
-export function MarkdownEditor({ value, onChange, placeholder, rows = 10, id }: Props) {
+export function MarkdownEditor({ value, onChange, placeholder, rows = 10, id, maxLength }: Props) {
   const [tab, setTab] = useState<'write' | 'preview'>('write')
   const ref = useRef<HTMLTextAreaElement>(null)
 
@@ -100,9 +102,15 @@ export function MarkdownEditor({ value, onChange, placeholder, rows = 10, id }: 
             value={value}
             onChange={(e) => onChange(e.target.value)}
             rows={rows}
+            maxLength={maxLength}
             placeholder={placeholder}
-            className="block w-full resize-y border-0 px-3 py-2 font-[inherit] text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none"
+            className="block w-full resize-y border-0 px-3 py-2 font-[inherit] text-base leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none sm:text-sm"
           />
+          {maxLength && value.length > maxLength * 0.8 && (
+            <p className={`px-3 pb-2 text-right text-xs ${value.length >= maxLength ? 'text-red-600' : 'text-slate-500'}`}>
+              {value.length.toLocaleString('ko-KR')} / {maxLength.toLocaleString('ko-KR')}자
+            </p>
+          )}
         </>
       ) : (
         <div className="min-h-[10rem] px-4 py-3">

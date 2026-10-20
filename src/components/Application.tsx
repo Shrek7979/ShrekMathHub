@@ -31,8 +31,8 @@ export function ApplicationFields({ value, onChange }: { value: Application; onC
   const set = (patch: Partial<Application>) => onChange({ ...value, ...patch })
   return (
     <>
-      <Field label="이름" hint="사이트에 표시돼요. 실명을 권해요.">
-        <input className="input" value={value.name} onChange={(e) => set({ name: e.target.value })} maxLength={30} autoComplete="name" />
+      <Field label="이름" hint="사이트에 표시돼요. 실명을 권해요." htmlFor="app-name">
+        <input id="app-name" className="input" value={value.name} onChange={(e) => set({ name: e.target.value })} maxLength={30} autoComplete="name" />
       </Field>
       <Field label="학교급">
         <div className="flex gap-2">
@@ -43,11 +43,12 @@ export function ApplicationFields({ value, onChange }: { value: Application; onC
           ))}
         </div>
       </Field>
-      <Field label="학교" hint="관리자만 볼 수 있어요.">
-        <input className="input" value={value.school} onChange={(e) => set({ school: e.target.value })} maxLength={100} placeholder="예) 서울OO고등학교" />
+      <Field label="학교" hint="관리자만 볼 수 있어요." htmlFor="app-school">
+        <input id="app-school" className="input" value={value.school} onChange={(e) => set({ school: e.target.value })} maxLength={100} placeholder="예) 서울OO고등학교" />
       </Field>
-      <Field label="교사 확인을 위한 한마디" hint="관리자만 볼 수 있어요. 담당 학년·과목, 연락 가능한 방법 등을 적어 주세요.">
+      <Field label="교사 확인을 위한 한마디" hint="관리자만 볼 수 있어요. 담당 학년·과목, 연락 가능한 방법 등을 적어 주세요." htmlFor="app-note">
         <textarea
+          id="app-note"
           className="input"
           rows={3}
           value={value.note}
@@ -101,12 +102,18 @@ export function ApplicationForm({ onDone }: { onDone: () => void }) {
   )
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({ label, hint, htmlFor, children }: { label: string; hint?: string; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div>
-      <span className="label">{label}</span>
+      {htmlFor ? (
+        <label className="label" htmlFor={htmlFor}>
+          {label}
+        </label>
+      ) : (
+        <span className="label">{label}</span>
+      )}
       {children}
-      {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </div>
   )
 }

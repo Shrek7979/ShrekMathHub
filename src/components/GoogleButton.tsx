@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { inAppBrowser, openInExternalBrowser, rememberReturnPath } from '@/lib/auth-helpers'
 import { koError } from '@/lib/format'
 import { NOT_CONFIGURED_MESSAGE, SUPABASE_KEY, SUPABASE_URL, isConfigured, supabase } from '@/lib/supabase'
 
@@ -10,6 +11,9 @@ const NOT_ENABLED = '아직 Google 로그인이 설정되지 않았어요. 관�
 export function GoogleButton({ label = 'Google로 계속하기' }: { label?: string }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [inApp, setInApp] = useState<'kakao' | 'other' | null>(null)
+
+  useEffect(() => setInApp(inAppBrowser()), [])
 
   async function go() {
     setError('')
@@ -23,6 +27,8 @@ export function GoogleButton({ label = 'Google로 계속하기' }: { label?: str
       setBusy(false)
       return setError(NOT_ENABLED)
     }
+    // 로그인하고 돌아오면 지금 보던 화면으로 (Supabase 가 허락한 주소는 첫 화면이라 거기서 다시 옮겨 준다)
+    rememberReturnPath()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -37,6 +43,23 @@ export function GoogleButton({ label = 'Google로 계속하기' }: { label?: str
       setError(/provider is not enabled/i.test(error.message) ? NOT_ENABLED : koError(error))
     }
   }
+
+  // 카카오톡 등 앱 안 브라우저에서는 Google 이 로그인을 막는다 → 바깥 브라우저로 안내
+  if (inApp)
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
+        <p className="font-semibold">이 화면(앱 안 브라우저)에서는 Google 로그인이 막혀 있어요.</p>
+        {inApp === 'kakao' ? (
+          <button type="button" className="btn-primary mt-3 w-full" onClick={openInExternalBrowser}>
+            Chrome·Safari 로 열기
+          </button>
+        ) : (
+          <p className="mt-1">
+            오른쪽 위(또는 아래) <b>⋮ 메뉴 → 다른 브라우저로 열기</b>를 눌러 Chrome·Safari 에서 열어 주세요.
+          </p>
+        )}
+      </div>
+    )
 
   return (
     <div>

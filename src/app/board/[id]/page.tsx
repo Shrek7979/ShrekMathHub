@@ -9,7 +9,8 @@ import { Gate } from '@/components/Gate'
 import { Markdown } from '@/components/Markdown'
 import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
-import { Empty, Spinner } from '@/components/ui'
+import { AuthorName } from '@/components/ListItems'
+import { Empty, LoadError, Spinner } from '@/components/ui'
 import { NOTICE, QUESTION } from '@/lib/curriculum'
 import { fullDate, koError, timeAgo } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
@@ -29,16 +30,28 @@ function Detail() {
   const router = useRouter()
   const { session, isAdmin } = useAuth()
   const [p, setP] = useState<Post | null | undefined>(undefined)
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
+    setFailed(false)
     supabase
       .from('posts')
-      .select('*, author:profiles(name)')
+      .select('*, author:profiles(name, role)')
       .eq('id', pid)
       .maybeSingle()
-      .then(({ data }) => setP((data as Post | null) ?? null))
-  }, [pid])
+      .then(({ data, error }) => (error ? setFailed(true) : setP((data as Post | null) ?? null)))
+  }, [pid, reload])
 
+  if (failed)
+    return (
+      <LoadError
+        onRetry={() => {
+          setP(undefined)
+          setReload((n) => n + 1)
+        }}
+      />
+    )
   if (p === undefined) return <Spinner />
   if (p === null)
     return (
@@ -85,7 +98,7 @@ function Detail() {
       <h1 className="mt-2 text-2xl font-bold leading-snug text-slate-900">{p.title}</h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 text-sm text-slate-500">
         <Link href={`/teachers/${p.author_id}`} className="font-bold text-slate-700 hover:text-brand-700">
-          {p.author?.name ?? '알 수 없음'}
+          <AuthorName author={p.author} />
         </Link>
         <span title={fullDate(p.created_at)}>{timeAgo(p.created_at)}</span>
         {p.updated_at.slice(0, 16) !== p.created_at.slice(0, 16) && <span className="text-xs">(고침)</span>}

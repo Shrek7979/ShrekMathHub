@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { GoogleButton } from '@/components/GoogleButton'
 import { ErrorBox } from '@/components/ui'
+import { takeReturnPath } from '@/lib/auth-helpers'
 import { koError } from '@/lib/format'
 import { NOT_CONFIGURED_MESSAGE, isConfigured, supabase } from '@/lib/supabase'
 
@@ -18,7 +19,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (session) router.replace('/')
+    if (session) router.replace(takeReturnPath() ?? '/')
   }, [session, router])
 
   async function submit(e: React.FormEvent) {
@@ -29,7 +30,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     setBusy(false)
     if (error) return setError(koError(error))
-    router.replace('/')
+    router.replace(takeReturnPath() ?? '/')
   }
 
   return (
@@ -37,7 +38,7 @@ export default function LoginPage() {
       <h1 className="page-title text-center">로그인</h1>
       <div className="card mt-6 p-5">
         <GoogleButton />
-        <p className="mt-3 text-center text-xs text-slate-400">처음이라면 Google로 들어온 뒤 가입 신청서를 적으면 돼요.</p>
+        <p className="mt-3 text-center text-xs text-slate-500">처음이라면 Google로 들어온 뒤 가입 신청서를 적으면 돼요.</p>
       </div>
 
       <details className="mt-4 text-sm">

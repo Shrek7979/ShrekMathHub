@@ -33,6 +33,7 @@ export function ResourceForm({ initial }: { initial?: Resource }) {
   const [progress, setProgress] = useState('')
 
   const fileCount = kept.length + added.length
+  const [dragging, setDragging] = useState(false)
 
   function changeLevel(l: SchoolLevel) {
     setLevel(l)
@@ -80,18 +81,19 @@ export function ResourceForm({ initial }: { initial?: Resource }) {
         files: [...kept, ...uploaded],
       }
       const { data, error } = initial
-        ? await supabase.from('resources').update(row).eq('id', initial.id).select('id').single()
-        : await supabase.from('resources').insert(row).select('id').single()
+        ? await supabase.from('resources').update(row).eq('id', initial.id).select('id').maybeSingle()
+        : await supabase.from('resources').insert(row).select('id').maybeSingle()
       if (error) throw error
+      if (!data) throw new Error('저장하지 못했어요. 권한이 없거나 이미 지워진 자료예요.')
 
       // 고칠 때 빼 버린 파일은 저장소에서도 지운다
       if (initial) {
         const keptPaths = new Set(kept.map((f) => f.path))
-        await removeFiles(initial.files.filter((f) => !keptPaths.has(f.path)).map((f) => f.path))
+        await removeFiles(initial.files.filter((f) => !keptPaths.has(f.path)).map((f) => f.path), initial.author_id)
       }
       router.push(`/resources/${data.id}`)
     } catch (err) {
-      await removeFiles(uploaded.map((f) => f.path))
+      await removeFiles(uploaded.map((f) => f.path), uid)
       setError(koError(err))
       setProgress('')
     }
@@ -188,14 +190,29 @@ export function ResourceForm({ initial }: { initial?: Resource }) {
           value={description}
           onChange={setDescription}
           rows={8}
+          maxLength={20000}
           placeholder={'어떤 수업에서 어떻게 썼는지, 학생 반응은 어땠는지 알려 주시면 큰 도움이 돼요.\n수식은 $y=a(x-p)^2+q$ 처럼 쓰면 돼요.'}
         />
       </div>
 
       <div>
         <span className="label">파일</span>
-        <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border-2 border-dashed border-slate-300 bg-white px-4 py-6 text-center text-sm text-slate-500 hover:border-brand-400 hover:bg-brand-50/40">
-          <span className="font-semibold text-slate-700">여기를 눌러 파일 고르기</span>
+        <label
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragging(true)
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragging(false)
+            addFiles(e.dataTransfer.files)
+          }}
+          className={`flex cursor-pointer flex-col items-center gap-1 rounded-lg border-2 border-dashed px-4 py-6 text-center text-sm text-slate-500 transition hover:border-brand-400 hover:bg-brand-50/40 ${
+            dragging ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-white'
+          }`}
+        >
+          <span className="font-semibold text-slate-700">{dragging ? '여기에 놓으면 추가돼요' : '여기를 눌러 고르거나, 파일을 끌어다 놓기'}</span>
           <span className="text-xs">HWP · PDF · PPT · 한셀/엑셀 · GeoGebra · 이미지 · ZIP 등, 한 파일 50MB, 최대 {MAX_FILES}개</span>
           <input
             type="file"
@@ -283,8 +300,8 @@ function FileRow(props: { name: string; size: number; isNew?: boolean; onRemove:
     <li className="flex items-center gap-3 px-3 py-2">
       <span className="min-w-0 flex-1 truncate">{props.name}</span>
       {props.isNew && <span className="badge-brand">새 파일</span>}
-      <span className="text-xs text-slate-400">{fileSize(props.size)}</span>
-      <button type="button" onClick={props.onRemove} className="text-xs text-slate-400 hover:text-red-500">
+      <span className="text-xs text-slate-500">{fileSize(props.size)}</span>
+      <button type="button" onClick={props.onRemove} className="text-xs text-slate-500 hover:text-red-500">
         빼기
       </button>
     </li>

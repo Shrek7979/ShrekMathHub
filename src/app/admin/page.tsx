@@ -9,7 +9,7 @@ import { LEVEL_LABEL } from '@/lib/curriculum'
 import { removeFiles } from '@/lib/files'
 import { fileSize, fullDate, koError, timeAgo } from '@/lib/format'
 import { SITE } from '@/lib/site'
-import { supabase } from '@/lib/supabase'
+import { BUCKET, supabase } from '@/lib/supabase'
 import type { FileInfo, MemberStatus, Profile, ProfilePrivate } from '@/lib/types'
 
 type Member = Profile & { profile_private: ProfilePrivate | ProfilePrivate[] | null }
@@ -81,7 +81,8 @@ function Members({ only }: { only?: MemberStatus }) {
 
   async function set(m: Member, status: MemberStatus, role?: 'member' | 'admin') {
     const verb = role === 'admin' ? '관리자로 지정' : role === 'member' ? '관리자에서 해제' : STATUS_LABEL[status]
-    if (status !== 'approved' && !confirm(`${m.name} 선생님을 '${verb}' 할까요?`)) return
+    // 승인만 바로, 거절·정지·관리자 지정/해제는 한 번 더 묻는다
+    if ((status !== 'approved' || role) && !confirm(`${m.name} 선생님을 '${verb}' 할까요?`)) return
     const { error } = await supabase.rpc('admin_set_member', { target: m.id, new_status: status, new_role: role ?? null })
     if (error) return alert(koError(error))
     load()
@@ -129,7 +130,7 @@ function Members({ only }: { only?: MemberStatus }) {
                     {STATUS_LABEL[m.status]}
                   </span>
                   {m.status === 'pending' && !p.school && <span className="badge">신청서 작성 전</span>}
-                  <span className="ml-auto text-xs text-slate-400" title={fullDate(m.created_at)}>
+                  <span className="ml-auto text-xs text-slate-500" title={fullDate(m.created_at)}>
                     {timeAgo(m.created_at)} 신청
                   </span>
                 </div>
@@ -212,10 +213,10 @@ function Reports() {
   async function removeTarget(r: Report) {
     if (!confirm('신고된 내용을 지울까요? 되돌릴 수 없어요.')) return
     if (r.resource) {
-      const { data } = await supabase.from('resources').select('files').eq('id', r.resource.id).maybeSingle()
+      const { data } = await supabase.from('resources').select('files, author_id').eq('id', r.resource.id).maybeSingle()
       const { error } = await supabase.from('resources').delete().eq('id', r.resource.id)
       if (error) return alert(koError(error))
-      await removeFiles(((data?.files ?? []) as FileInfo[]).map((f) => f.path))
+      if (data) await removeFiles(((data.files ?? []) as FileInfo[]).map((f) => f.path), data.author_id as string)
     } else {
       const { error } = r.post
         ? await supabase.from('posts').delete().eq('id', r.post.id)
@@ -289,10 +290,11 @@ type StatsData = {
 function Stats() {
   const [s, setS] = useState<StatsData | null>(null)
   const [error, setError] = useState('')
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
     supabase.rpc('admin_stats').then(({ data, error }) => (error ? setError(koError(error)) : setS(data as StatsData)))
-  }, [])
+  }, [reload])
 
   if (error) return <Empty>{error}</Empty>
   if (!s) return <Spinner />
@@ -336,6 +338,7 @@ function Stats() {
           <li>큰 영상·PPT 는 Google 드라이브나 유튜브에 올리고 자료의 [링크] 칸에 주소를 넣으면 저장 공간을 아낄 수 있어요.</li>
           <li>공간이 부족해지면 Supabase Pro 요금제(월 25달러 정도)로 바꾸면 크게 늘어나요.</li>
         </ul>
+        <OrphanCleaner onDone={() => setReload((n) => n + 1)} />
       </section>
     </div>
   )
@@ -354,3 +357,50 @@ function GoogleTestUserNote() {
   )
 }
 
+/** 어느 자료에도 연결되지 않은 파일(올리다 창을 닫은 경우 등)을 찾아 지운다 */
+function OrphanCleaner({ onDone }: { onDone: () => void }) {
+  const [names, setNames] = useState<string[] | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function find() {
+    setBusy(true)
+    const { data, error } = await supabase.rpc('admin_orphan_files')
+    setBusy(false)
+    if (error) return alert(koError(error))
+    setNames(((data as (string | { name: string })[]) ?? []).map((x) => (typeof x === 'string' ? x : x.name)))
+  }
+
+  async function clean() {
+    if (!names || !confirm(`연결 안 된 파일 ${names.length}개를 지울까요? 자료에 붙어 있는 파일은 지우지 않아요.`)) return
+    setBusy(true)
+    for (let i = 0; i < names.length; i += 100) {
+      const { error } = await supabase.storage.from(BUCKET).remove(names.slice(i, i + 100))
+      if (error) {
+        setBusy(false)
+        return alert(koError(error))
+      }
+    }
+    setBusy(false)
+    setNames([])
+    onDone()
+  }
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4 text-sm">
+      <button className="btn-secondary btn-sm" onClick={find} disabled={busy}>
+        연결 안 된 파일 찾기
+      </button>
+      {names !== null &&
+        (names.length === 0 ? (
+          <span className="text-slate-500">정리할 파일이 없어요. 👍</span>
+        ) : (
+          <>
+            <span className="text-slate-600">하루 넘게 어느 자료에도 연결되지 않은 파일 {names.length}개</span>
+            <button className="btn-danger btn-sm" onClick={clean} disabled={busy}>
+              정리하기
+            </button>
+          </>
+        ))}
+    </div>
+  )
+}

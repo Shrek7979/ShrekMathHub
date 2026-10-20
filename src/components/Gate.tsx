@@ -2,19 +2,35 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { rememberReturnPath } from '@/lib/auth-helpers'
 import { supabase } from '@/lib/supabase'
 import { ApplicationForm } from './Application'
 import { useAuth } from './AuthProvider'
 import { GoogleButton } from './GoogleButton'
-import { Spinner } from './ui'
+import { LoadError, Spinner } from './ui'
 
 /** 승인된 선생님(admin 이면 관리자)에게만 children 을 보여 준다 */
 export function Gate({ children, admin = false }: { children: React.ReactNode; admin?: boolean }) {
-  const { session, profile, loading, isApproved, isAdmin } = useAuth()
+  const { session, profile, loading, isApproved, isAdmin, profileError, refreshProfile, signOut } = useAuth()
 
   if (loading) return <Spinner />
   if (!session) return <LoginNeeded />
-  if (!profile) return <StatusCard title="회원 정보를 찾지 못했어요">관리자에게 알려 주세요.</StatusCard>
+  if (!profile && profileError)
+    return <LoadError onRetry={refreshProfile}>회원 정보를 불러오지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.</LoadError>
+  if (!profile)
+    return (
+      <StatusCard title="회원 정보를 찾지 못했어요">
+        <p>잠시 뒤 다시 시도하거나, 계속 이러면 관리자에게 알려 주세요.</p>
+        <div className="mt-5 flex justify-center gap-2">
+          <button className="btn-secondary btn-sm" onClick={refreshProfile}>
+            다시 시도
+          </button>
+          <button className="btn-ghost btn-sm" onClick={signOut}>
+            로그아웃
+          </button>
+        </div>
+      </StatusCard>
+    )
   if (profile.status === 'pending') return <PendingCard name={profile.name} />
   if (profile.status === 'rejected')
     return (
@@ -28,6 +44,7 @@ export function Gate({ children, admin = false }: { children: React.ReactNode; a
 }
 
 export function LoginNeeded() {
+  useEffect(() => rememberReturnPath(), [])
   return (
     <StatusCard title="선생님 전용 공간이에요">
       <p>로그인하면 자료실과 게시판을 이용할 수 있어요.</p>

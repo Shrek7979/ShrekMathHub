@@ -5,12 +5,24 @@ import { timeAgo } from '@/lib/format'
 import { countOf, type Post, type Resource } from '@/lib/types'
 
 export const RESOURCE_LIST_COLUMNS =
-  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, featured, created_at, author:profiles(name), likes(count), comments(count)'
+  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, featured, created_at, author:profiles(name, role), likes(count), comments(count)'
 
-export const POST_LIST_COLUMNS = 'id, category, title, solved, created_at, author:profiles(name), likes(count), comments(count)'
+export const POST_LIST_COLUMNS = 'id, category, title, solved, created_at, author:profiles(name, role), likes(count), comments(count)'
+
+/** 작성자 이름 (관리자는 표시를 붙여 사칭과 구분) */
+export function AuthorName({ author }: { author?: { name: string; role?: string } | null }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {author?.name ?? '알 수 없음'}
+      {author?.role === 'admin' && <span className="rounded bg-brand-600 px-1 text-[10px] font-bold leading-4 text-white">관리자</span>}
+    </span>
+  )
+}
 
 export function ResourceItem({ r }: { r: Resource }) {
-  const exts = Array.from(new Set(r.files.map((f) => extOf(f.name).toUpperCase()).filter(Boolean)))
+  // 파일 정보가 이상해도 목록 전체가 멈추지 않게
+  const files = (r.files ?? []).filter((f) => f && typeof f.name === 'string')
+  const exts = Array.from(new Set(files.map((f) => extOf(f.name).toUpperCase()).filter(Boolean)))
   return (
     <li>
       <Link href={`/resources/${r.id}`} className="card block px-4 py-3 transition hover:border-brand-300 hover:shadow-sm">
@@ -24,7 +36,7 @@ export function ResourceItem({ r }: { r: Resource }) {
         </div>
         <p className="mt-1.5 font-semibold text-slate-900">{r.title}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-          <span>{r.author?.name ?? '알 수 없음'}</span>
+          <AuthorName author={r.author} />
           <span>{timeAgo(r.created_at)}</span>
           {exts.length > 0 && <span className="font-mono text-[11px] text-slate-400">{exts.join(' · ')}</span>}
           {r.link_url && <span className="text-slate-400">🔗 링크</span>}
@@ -56,8 +68,10 @@ export function PostItem({ p }: { p: Post }) {
           {p.title}
           {comments > 0 && <span className="ml-1.5 text-sm font-semibold text-brand-600">[{comments}]</span>}
         </span>
-        <span className="hidden shrink-0 text-xs text-slate-500 sm:inline">{p.author?.name ?? '알 수 없음'}</span>
-        <span className="w-16 shrink-0 text-right text-xs text-slate-400">{timeAgo(p.created_at)}</span>
+        <span className="hidden shrink-0 text-xs text-slate-500 sm:inline">
+          <AuthorName author={p.author} />
+        </span>
+        <span className="w-16 shrink-0 text-right text-xs text-slate-500">{timeAgo(p.created_at)}</span>
       </Link>
     </li>
   )

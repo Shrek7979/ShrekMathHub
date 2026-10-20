@@ -93,18 +93,24 @@ export default function SignupPage() {
         <summary className="cursor-pointer text-center text-slate-500 hover:text-slate-800">Google 계정이 없다면 이메일로 가입</summary>
         <form onSubmit={submit} className="card mt-3 space-y-4 p-5">
           <div>
-            <span className="label">이메일</span>
-            <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+            <label className="label" htmlFor="su-email">
+              이메일
+            </label>
+            <input id="su-email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <span className="label">비밀번호</span>
-              <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
-              <p className="mt-1 text-xs text-slate-400">8자 이상</p>
+              <label className="label" htmlFor="su-pw">
+                비밀번호
+              </label>
+              <input id="su-pw" className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+              <p className="mt-1 text-xs text-slate-500">8자 이상</p>
             </div>
             <div>
-              <span className="label">비밀번호 확인</span>
-              <input className="input" type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} autoComplete="new-password" />
+              <label className="label" htmlFor="su-pw2">
+                비밀번호 확인
+              </label>
+              <input id="su-pw2" className="input" type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} autoComplete="new-password" />
             </div>
           </div>
           <ApplicationFields value={app} onChange={setApp} />

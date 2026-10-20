@@ -38,6 +38,14 @@ export function koError(e: unknown): string {
   if (/rate limit|too many/i.test(msg)) return '요청이 너무 많아요. 잠시 뒤에 다시 해 주세요.'
   if (/row-level security|permission denied/i.test(msg)) return '권한이 없어요. 승인된 회원인지 확인해 주세요.'
   if (/exceeded the maximum allowed size|Payload too large/i.test(msg)) return '파일이 너무 커요. 한 파일에 50MB까지 올릴 수 있어요.'
-  if (/Failed to fetch|NetworkError/i.test(msg)) return '인터넷 연결을 확인해 주세요.'
-  return msg || '알 수 없는 오류가 났어요.'
+  if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) return '인터넷 연결을 확인해 주세요.'
+  if (/mime type|invalid_mime/i.test(msg)) return '올릴 수 없는 파일 형식이에요.'
+  if (/Object not found/i.test(msg)) return '파일을 찾을 수 없어요. 지워졌을 수 있어요.'
+  if (/Cannot coerce|multiple \(or no\) rows|PGRST116/i.test(msg)) return '권한이 없거나 이미 지워진 내용이에요.'
+  if (/check constraint/i.test(msg)) return '입력한 내용의 길이나 형식이 맞지 않아요. 다시 확인해 주세요.'
+  if (/JWT|refresh token|session/i.test(msg)) return '로그인이 만료됐어요. 다시 로그인해 주세요.'
+  // 데이터베이스에서 보낸 한국어 안내는 그대로, 그 밖의 영어 오류는 쉬운 말 + 참고용 원문
+  if (!msg) return '알 수 없는 오류가 났어요.'
+  if (/[가-힣]/.test(msg)) return msg
+  return `문제가 생겼어요. 잠시 뒤 다시 해 주세요. (${msg.slice(0, 80)})`
 }

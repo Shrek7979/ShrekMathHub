@@ -25,7 +25,7 @@ export type FileInfo = {
 }
 
 type Count = { count: number }[]
-type Author = { name: string } | null
+type Author = { name: string; role?: string } | null
 
 export type Resource = {
   id: number

@@ -18,6 +18,18 @@ export function Empty({ children, action }: { children: React.ReactNode; action?
   )
 }
 
+/** 불러오기에 실패했을 때 (학교 와이파이가 끊기는 등) — '지워졌다'고 잘못 알리지 않게 */
+export function LoadError({ onRetry, children }: { onRetry: () => void; children?: React.ReactNode }) {
+  return (
+    <div className="card flex flex-col items-center gap-3 px-6 py-10 text-center text-sm text-slate-600" role="alert">
+      <p>{children ?? '불러오지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.'}</p>
+      <button className="btn-secondary btn-sm" onClick={onRetry}>
+        다시 시도
+      </button>
+    </div>
+  )
+}
+
 export function ErrorBox({ children }: { children: React.ReactNode }) {
   if (!children) return null
   return (

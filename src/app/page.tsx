@@ -7,7 +7,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
 import { SiteBanners } from '@/components/SiteBanners'
-import { Spinner } from '@/components/ui'
+import { LoadError, Spinner } from '@/components/ui'
 import { NOTICE, QUESTION, SUBJECTS } from '@/lib/curriculum'
 import { timeAgo } from '@/lib/format'
 import { LINK_GROUPS } from '@/lib/links'
@@ -88,6 +88,8 @@ type HomeData = {
 function Dashboard() {
   const { profile, isAdmin } = useAuth()
   const [data, setData] = useState<HomeData | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
   const level: SchoolLevel = profile?.school_level === '중' ? '중' : '고'
 
   useEffect(() => {
@@ -99,16 +101,18 @@ function Dashboard() {
       res().order('created_at', { ascending: false }).limit(5),
       posts().neq('category', NOTICE).order('created_at', { ascending: false }).limit(6),
       posts().eq('category', QUESTION).eq('solved', false).order('created_at', { ascending: false }).limit(4),
-    ]).then(([n, f, r, p, q]) =>
+    ]).then(([n, f, r, p, q]) => {
+      if (r.error || p.error) return setFailed(true)
+      setFailed(false)
       setData({
         notice: (n.data as unknown as Post | null) ?? null,
         featured: (f.data as unknown as Resource[]) ?? [],
         recent: (r.data as unknown as Resource[]) ?? [],
         posts: (p.data as unknown as Post[]) ?? [],
         questions: (q.data as unknown as Post[]) ?? [],
-      }),
-    )
-  }, [])
+      })
+    })
+  }, [reload])
 
   return (
     <div>
@@ -129,6 +133,8 @@ function Dashboard() {
 
       <HubSearch />
 
+      <WelcomeGuide />
+
       {data?.notice && (
         <Link
           href={`/board/${data.notice.id}`}
@@ -136,7 +142,7 @@ function Dashboard() {
         >
           <span className="badge shrink-0 bg-amber-100 font-semibold text-amber-800">📢 공지</span>
           <span className="min-w-0 flex-1 truncate font-medium text-slate-800">{data.notice.title}</span>
-          <span className="shrink-0 text-xs text-slate-400">{timeAgo(data.notice.created_at)}</span>
+          <span className="shrink-0 text-xs text-slate-500">{timeAgo(data.notice.created_at)}</span>
         </Link>
       )}
 
@@ -144,7 +150,11 @@ function Dashboard() {
         <SiteBanners />
       </div>
 
-      {!data ? (
+      {failed ? (
+        <div className="mt-8">
+          <LoadError onRetry={() => setReload((n) => n + 1)} />
+        </div>
+      ) : !data ? (
         <Spinner />
       ) : (
         <>
@@ -234,6 +244,54 @@ function Dashboard() {
         </>
       )}
     </div>
+  )
+}
+
+/** 처음 들어온 선생님을 위한 안내 (닫으면 이 브라우저에서는 다시 안 보임) */
+function WelcomeGuide() {
+  const KEY = 'smh-welcome-closed'
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    try {
+      setOpen(localStorage.getItem(KEY) !== '1')
+    } catch {}
+  }, [])
+  if (!open) return null
+  const steps = [
+    ['📂', '자료 올리기', '파일(HWP·PDF·PPT 등)이나 GeoGebra·유튜브 링크를 과목·단원과 함께 올려요.', '/resources/new'],
+    ['🗺️', '교육과정 지도', '과목·단원별로 모인 자료를 찾아봐요.', '/curriculum'],
+    ['💬', '게시판', '수업 고민을 질문하고, 해결되면 ✔ 해결됨을 눌러요.', '/board'],
+    ['∑', '수식 쓰기', '글·댓글에서 $x^2$ 처럼 $ 로 감싸거나 편집기의 수식 버튼을 눌러요.', '/board/new'],
+  ]
+  return (
+    <section className="card relative mt-5 p-5">
+      <button
+        onClick={() => {
+          setOpen(false)
+          try {
+            localStorage.setItem(KEY, '1')
+          } catch {}
+        }}
+        className="absolute right-3 top-3 rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+        aria-label="안내 닫기"
+      >
+        닫기 ✕
+      </button>
+      <h2 className="font-bold text-slate-900">처음 오셨나요? 이렇게 써 보세요</h2>
+      <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+        {steps.map(([icon, title, desc, href]) => (
+          <li key={title}>
+            <Link href={href} className="flex gap-3 rounded-lg p-2 hover:bg-slate-50">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-lg text-brand-700">{icon}</span>
+              <span>
+                <b className="text-sm text-slate-900">{title}</b>
+                <span className="block text-xs leading-relaxed text-slate-500">{desc}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

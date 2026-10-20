@@ -12,6 +12,8 @@ type AuthState = {
   loading: boolean
   isApproved: boolean
   isAdmin: boolean
+  /** 회원 정보를 불러오다 실패함 (연결 문제) */
+  profileError: boolean
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionReady, setSessionReady] = useState(!isConfigured)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [profileReady, setProfileReady] = useState(!isConfigured)
+  const [profileError, setProfileError] = useState(false)
   const userId = session?.user.id ?? null
 
   useEffect(() => {
@@ -45,8 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfileReady(true)
       return
     }
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
-    setProfile((data as Profile | null) ?? null)
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
+    setProfileError(!!error)
+    if (!error) setProfile((data as Profile | null) ?? null)
     setProfileReady(true)
   }, [])
 
@@ -62,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading: !sessionReady || !profileReady,
     isApproved: profile?.status === 'approved',
     isAdmin: profile?.status === 'approved' && profile.role === 'admin',
+    profileError,
     refreshProfile: () => loadProfile(userId),
     signOut: async () => {
       await supabase.auth.signOut()

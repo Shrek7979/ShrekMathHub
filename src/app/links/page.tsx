@@ -41,7 +41,7 @@ function LinkCard({ name, url, desc }: { name: string; url: string; desc: string
     <a href={url} target="_blank" rel="noopener noreferrer" className="card group block p-4 transition hover:border-brand-300 hover:shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <p className="font-bold text-slate-900 group-hover:text-brand-700">{name}</p>
-        <span className="text-xs text-slate-400">↗</span>
+        <span className="text-xs text-slate-500">↗</span>
       </div>
       <p className="mt-1 text-sm text-slate-600">{desc}</p>
       <p className="mt-2 font-mono text-[11px] text-slate-400">{host}</p>

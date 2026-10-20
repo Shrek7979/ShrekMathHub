@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
-import { Empty, Spinner } from '@/components/ui'
+import { Empty, LoadError, Spinner } from '@/components/ui'
 import { LEVEL_LABEL } from '@/lib/curriculum'
 import { fullDate } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
@@ -24,23 +24,38 @@ function Teacher() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined)
   const [resources, setResources] = useState<Resource[]>([])
   const [posts, setPosts] = useState<Post[]>([])
+  const [counts, setCounts] = useState({ resources: 0, posts: 0, downloads: 0 })
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
+    setFailed(false)
     Promise.all([
       supabase.from('profiles').select('*').eq('id', id).maybeSingle(),
-      supabase.from('resources').select(RESOURCE_LIST_COLUMNS).eq('author_id', id).order('created_at', { ascending: false }).limit(50),
-      supabase.from('posts').select(POST_LIST_COLUMNS).eq('author_id', id).order('created_at', { ascending: false }).limit(30),
-    ]).then(([p, r, b]) => {
+      supabase
+        .from('resources')
+        .select(RESOURCE_LIST_COLUMNS, { count: 'exact' })
+        .eq('author_id', id)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabase.from('posts').select(POST_LIST_COLUMNS, { count: 'exact' }).eq('author_id', id).order('created_at', { ascending: false }).limit(30),
+      supabase.from('resources').select('download_count').eq('author_id', id),
+    ]).then(([p, r, b, d]) => {
+      if (p.error || r.error || b.error) return setFailed(true)
       setProfile((p.data as Profile | null) ?? null)
       setResources((r.data as unknown as Resource[]) ?? [])
       setPosts((b.data as unknown as Post[]) ?? [])
+      setCounts({
+        resources: r.count ?? 0,
+        posts: b.count ?? 0,
+        downloads: (d.data ?? []).reduce((s, x) => s + (x.download_count as number), 0),
+      })
     })
-  }, [id])
+  }, [id, reload])
 
+  if (failed) return <LoadError onRetry={() => setReload((n) => n + 1)} />
   if (profile === undefined) return <Spinner />
   if (profile === null) return <Empty>찾을 수 없는 선생님이에요.</Empty>
-
-  const downloads = resources.reduce((s, r) => s + r.download_count, 0)
 
   return (
     <div>
@@ -57,9 +72,9 @@ function Teacher() {
           </p>
         </div>
         <dl className="ml-auto flex gap-6 text-center">
-          <Stat label="자료" value={resources.length} />
-          <Stat label="글" value={posts.length} />
-          <Stat label="내려받기" value={downloads} />
+          <Stat label="자료" value={counts.resources} />
+          <Stat label="글" value={counts.posts} />
+          <Stat label="내려받기" value={counts.downloads} />
         </dl>
       </div>
 

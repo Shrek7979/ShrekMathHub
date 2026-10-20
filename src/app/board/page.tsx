@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem } from '@/components/ListItems'
-import { Empty, Spinner } from '@/components/ui'
+import { Empty, LoadError, Spinner } from '@/components/ui'
 import { BOARD_CATEGORIES, NOTICE } from '@/lib/curriculum'
 import { cleanSearch } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
@@ -34,6 +34,9 @@ function Board() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
   const [notices, setNotices] = useState<Post[]>([])
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
   const showPinned = !category && !q
 
   function setParam(changes: Record<string, string>) {
@@ -57,17 +60,22 @@ function Board() {
   // 전체 보기에서는 공지를 맨 위에 따로 고정
   useEffect(() => {
     if (!showPinned) return setNotices([])
+    let cancelled = false
     supabase
       .from('posts')
       .select(POST_LIST_COLUMNS)
       .eq('category', NOTICE)
       .order('created_at', { ascending: false })
       .limit(3)
-      .then(({ data }) => setNotices((data as unknown as Post[]) ?? []))
-  }, [showPinned])
+      .then(({ data }) => !cancelled && setNotices((data as unknown as Post[]) ?? []))
+    return () => {
+      cancelled = true
+    }
+  }, [showPinned, reload])
 
   useEffect(() => {
     let cancelled = false
+    setFailed(false)
     let query = supabase.from('posts').select(POST_LIST_COLUMNS, { count: 'exact' })
     if (category) query = query.eq('category', category)
     else if (!q) query = query.neq('category', NOTICE)
@@ -77,8 +85,10 @@ function Board() {
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(page * PAGE, page * PAGE + PAGE - 1)
-      .then(({ data, count }) => {
+      .then(({ data, count, error }) => {
         if (cancelled) return
+        setLoadingMore(false)
+        if (error) return setFailed(true)
         const rows = (data as unknown as Post[]) ?? []
         setItems((prev) => (page === 0 ? rows : [...(prev ?? []), ...rows]))
         setTotal(count ?? 0)
@@ -86,7 +96,7 @@ function Board() {
     return () => {
       cancelled = true
     }
-  }, [category, q, page])
+  }, [category, q, page, reload])
 
   return (
     <div>
@@ -125,8 +135,23 @@ function Board() {
       )}
 
       <div className="mt-4">
-        {items === null ? (
+        {failed ? (
+          <LoadError
+            onRetry={() => {
+              setItems(null)
+              setPage(0)
+              setReload((n) => n + 1)
+            }}
+          />
+        ) : items === null ? (
           <Spinner />
+        ) : items.length === 0 && notices.length > 0 ? (
+          <p className="py-6 text-center text-sm text-slate-500">
+            아직 다른 글이 없어요.{' '}
+            <Link href="/board/new" className="font-semibold text-brand-700">
+              첫 글 쓰기 →
+            </Link>
+          </p>
         ) : items.length === 0 ? (
           <Empty
             action={
@@ -146,7 +171,14 @@ function Board() {
             </ul>
             {items.length < total && (
               <div className="mt-4 text-center">
-                <button className="btn-secondary" onClick={() => setPage((p) => p + 1)}>
+                <button
+                  className="btn-secondary"
+                  disabled={loadingMore}
+                  onClick={() => {
+                    setLoadingMore(true)
+                    setPage((p) => p + 1)
+                  }}
+                >
                   더 보기 ({total - items.length}개 남음)
                 </button>
               </div>

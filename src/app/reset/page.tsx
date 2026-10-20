@@ -48,6 +48,7 @@ export default function ResetPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="새 비밀번호 (8자 이상)"
+          aria-label="새 비밀번호"
           autoComplete="new-password"
         />
         <ErrorBox>{error}</ErrorBox>

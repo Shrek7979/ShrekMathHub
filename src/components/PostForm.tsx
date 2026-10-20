@@ -31,10 +31,11 @@ export function PostForm({ initial, defaultCategory }: { initial?: Post; default
     setBusy(true)
     const row = { category, title: title.trim(), body: body.trim() }
     const { data, error } = initial
-      ? await supabase.from('posts').update(row).eq('id', initial.id).select('id').single()
-      : await supabase.from('posts').insert(row).select('id').single()
+      ? await supabase.from('posts').update(row).eq('id', initial.id).select('id').maybeSingle()
+      : await supabase.from('posts').insert(row).select('id').maybeSingle()
     setBusy(false)
     if (error) return setError(koError(error))
+    if (!data) return setError('저장하지 못했어요. 권한이 없거나 이미 지워진 글이에요.')
     router.push(`/board/${data.id}`)
   }
 
@@ -65,9 +66,10 @@ export function PostForm({ initial, defaultCategory }: { initial?: Post; default
           value={body}
           onChange={setBody}
           rows={14}
+          maxLength={30000}
           placeholder={'수업 고민, 질문, 경험을 자유롭게 나눠 주세요.\n수식 예) $\\frac{d}{dx}x^n = nx^{n-1}$'}
         />
-        <p className="mt-1.5 text-xs text-slate-400">학생 이름이나 성적 같은 개인정보는 쓰지 말아 주세요.</p>
+        <p className="mt-1.5 text-xs text-slate-500">학생 이름이나 성적 같은 개인정보는 쓰지 말아 주세요.</p>
       </div>
       <ErrorBox>{error}</ErrorBox>
       <div className="flex justify-end gap-3">

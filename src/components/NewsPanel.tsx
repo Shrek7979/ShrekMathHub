@@ -17,6 +17,13 @@ export function NewsPanel() {
   const [sheet, setSheet] = useState(false)
 
   useEffect(() => {
+    if (!sheet) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSheet(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sheet])
+
+  useEffect(() => {
     try {
       if (localStorage.getItem(STORAGE_KEY) === 'closed') setOpen(false)
     } catch {}
@@ -58,7 +65,7 @@ export function NewsPanel() {
         📰 수학 뉴스
       </button>
       {sheet && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-900/40" onClick={() => setSheet(false)}>
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-900/40" onClick={() => setSheet(false)} role="dialog" aria-modal="true" aria-label="수학 뉴스">
           <div className="flex h-[85vh] flex-col overflow-hidden rounded-t-2xl bg-white" onClick={(e) => e.stopPropagation()}>
             <PanelHeader onClose={() => setSheet(false)} closeLabel="닫기 ✕" />
             <NewsFrame />
@@ -93,7 +100,15 @@ function PanelHeader({ onClose, closeLabel }: { onClose: () => void; closeLabel:
 }
 
 function NewsFrame() {
-  return <iframe src={NEWS_URL} title="Shrek Edu Insight 수학 뉴스" className="w-full flex-1 border-0" />
+  return (
+    <iframe
+      src={NEWS_URL}
+      title="Shrek Edu Insight 수학 뉴스"
+      // 뉴스 사이트가 이 화면 전체를 다른 곳으로 바꾸지 못하게 (새 창 열기·스크립트는 허용)
+      sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+      className="w-full flex-1 border-0"
+    />
+  )
 }
 
 /** 처음 그릴 때는 null (서버에서는 화면 크기를 모름) */

@@ -72,7 +72,7 @@ function ReceivedComments() {
       ])
       const rids = (r.data ?? []).map((x) => x.id as number)
       const pids = (p.data ?? []).map((x) => x.id as number)
-      const cols = 'id, body, created_at, author:profiles(name), resource:resources(id, title), post:posts(id, title)'
+      const cols = 'id, body, created_at, author:profiles(name, role), resource:resources(id, title), post:posts(id, title)'
       const [a, b] = await Promise.all([
         rids.length ? supabase.from('comments').select(cols).in('resource_id', rids).neq('author_id', uid).order('created_at', { ascending: false }).limit(30) : null,
         pids.length ? supabase.from('comments').select(cols).in('post_id', pids).neq('author_id', uid).order('created_at', { ascending: false }).limit(30) : null,
@@ -191,7 +191,7 @@ function Saved() {
           >
             <span className={b.resource ? 'badge-brand' : 'badge'}>{b.resource ? `자료 · ${b.resource.resource_type}` : b.post!.category}</span>
             <span className="min-w-0 flex-1 truncate font-medium text-slate-900">{b.resource?.title ?? b.post?.title}</span>
-            <span className="text-xs text-slate-400">{timeAgo(b.created_at)}</span>
+            <span className="text-xs text-slate-500">{timeAgo(b.created_at)}</span>
           </Link>
         </li>
       ))}
@@ -216,7 +216,9 @@ function MyProfile() {
       .eq('id', uid)
       .maybeSingle()
       .then(({ data }) => setPriv((data as ProfilePrivate) ?? { email: session?.user.email ?? '', school: '', note: '' }))
-  }, [uid, session])
+    // session 객체는 토큰이 새로 고쳐질 때마다 바뀌므로 uid 만 본다 (적던 내용이 지워지지 않게)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid])
 
   async function save(e: React.FormEvent) {
     e.preventDefault()

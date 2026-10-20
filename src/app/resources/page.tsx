@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import { Gate } from '@/components/Gate'
 import { RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
-import { Empty, Spinner } from '@/components/ui'
+import { Empty, LoadError, Spinner } from '@/components/ui'
 import { RESOURCE_TYPES, SUBJECTS } from '@/lib/curriculum'
 import { cleanSearch } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
@@ -40,6 +40,8 @@ function ResourceList() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
 
   /** 주소창의 조건을 바꾼다 (뒤로 가기·링크 공유 가능) */
   function setParam(changes: Record<string, string>) {
@@ -57,6 +59,7 @@ function ResourceList() {
 
   useEffect(() => {
     let cancelled = false
+    setFailed(false)
     async function load() {
       let query = supabase.from('resources').select(RESOURCE_LIST_COLUMNS, { count: 'exact' })
       if (level) query = query.eq('school_level', level)
@@ -70,18 +73,19 @@ function ResourceList() {
         .order(sort === 'popular' ? 'download_count' : 'created_at', { ascending: false })
         .order('id', { ascending: false })
         .range(page * PAGE, page * PAGE + PAGE - 1)
-      const { data, count } = await query
+      const { data, count, error } = await query
       if (cancelled) return
+      setLoadingMore(false)
+      if (error) return setFailed(true)
       const rows = (data as unknown as Resource[]) ?? []
       setItems((prev) => (page === 0 ? rows : [...(prev ?? []), ...rows]))
       setTotal(count ?? 0)
-      setLoadingMore(false)
     }
     load()
     return () => {
       cancelled = true
     }
-  }, [level, subject, type, unit, featured, sort, q, page])
+  }, [level, subject, type, unit, featured, sort, q, page, reload])
 
   // 조건이 바뀌면 첫 쪽부터
   useEffect(() => {
@@ -196,7 +200,15 @@ function ResourceList() {
       </div>
 
       <div className="mt-3">
-        {items === null ? (
+        {failed ? (
+          <LoadError
+            onRetry={() => {
+              setItems(null)
+              setPage(0)
+              setReload((n) => n + 1)
+            }}
+          />
+        ) : items === null ? (
           <Spinner />
         ) : items.length === 0 ? (
           <Empty
