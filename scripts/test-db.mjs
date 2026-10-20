@@ -110,6 +110,19 @@ await test('이메일·학교·메모는 본인과 관리자만', async () => {
 await test('관리자는 자기 자신을 바꿀 수 없음', async () => {
   await fails(as(A, `select admin_set_member($1, 'rejected')`, [A]), /내 계정/)
 })
+const G = '00000000-0000-0000-0000-00000000000d' // Google 로 처음 들어온 선생님
+await test('Google 로그인: 구글 이름으로 대기 회원이 되고, 신청서(학교·메모)는 비어 있음', async () => {
+  await signUp(G, 'park@gmail.com', { name: '박구글', full_name: '박구글', avatar_url: 'https://x/y.png', email_verified: true })
+  eq(await one(G, 'select name, status from profiles where id = $1', [G]), { name: '박구글', status: 'pending' })
+  eq(await one(G, 'select school, note from profile_private where id = $1', [G]), { school: null, note: null })
+})
+await test('대기 회원이 가입 신청서를 직접 채울 수 있음 (승인 상태는 그대로)', async () => {
+  await as(G, `update profiles set name = '박수학', school_level = '중고' where id = $1`, [G])
+  await as(G, `update profile_private set school = 'OO중', note = '중2 담당' where id = $1`, [G])
+  eq(await one(A, 'select p.name, p.status, v.school from profiles p join profile_private v using (id) where p.id = $1', [G]),
+    { name: '박수학', status: 'pending', school: 'OO중' })
+  eq(await rows(G, `update profile_private set note = 'x' where id = $1 returning id`, [B]), [])
+})
 
 console.log('\n자료실')
 const ins = `insert into resources (title, school_level, subject, unit, resource_type, files)

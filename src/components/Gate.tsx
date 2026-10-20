@@ -1,7 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { ApplicationForm } from './Application'
 import { useAuth } from './AuthProvider'
+import { GoogleButton } from './GoogleButton'
 import { Spinner } from './ui'
 
 /** 승인된 선생님(admin 이면 관리자)에게만 children 을 보여 준다 */
@@ -27,12 +31,10 @@ export function LoginNeeded() {
   return (
     <StatusCard title="선생님 전용 공간이에요">
       <p>로그인하면 자료실과 게시판을 이용할 수 있어요.</p>
-      <div className="mt-5 flex justify-center gap-2">
-        <Link href="/login" className="btn-secondary">
-          로그인
-        </Link>
-        <Link href="/signup" className="btn-primary">
-          가입 신청
+      <div className="mx-auto mt-5 max-w-xs">
+        <GoogleButton />
+        <Link href="/signup" className="mt-3 inline-block text-sm text-slate-500 hover:text-slate-800">
+          처음이신가요? 가입 안내 보기
         </Link>
       </div>
     </StatusCard>
@@ -40,6 +42,30 @@ export function LoginNeeded() {
 }
 
 export function PendingCard({ name }: { name: string }) {
+  const uid = useAuth().session?.user.id
+  // Google 로 처음 들어온 선생님은 아직 학교·확인 정보를 적지 않았다
+  const [applied, setApplied] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    supabase
+      .from('profile_private')
+      .select('school')
+      .eq('id', uid)
+      .maybeSingle()
+      .then(({ data }) => setApplied(!!data?.school))
+  }, [uid])
+
+  if (applied === null) return <Spinner />
+  if (!applied)
+    return (
+      <StatusCard title="가입 신청서를 적어 주세요">
+        <p>관리자가 수학 선생님인지 확인할 수 있도록 학교와 담당 정보를 알려 주세요.</p>
+        <div className="mt-6">
+          <ApplicationForm onDone={() => setApplied(true)} />
+        </div>
+      </StatusCard>
+    )
+
   return (
     <StatusCard title={`${name} 선생님, 가입 신청이 접수됐어요`}>
       <p>관리자가 선생님 정보를 확인한 뒤 승인해 드려요.</p>

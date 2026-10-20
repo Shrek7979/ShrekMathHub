@@ -3,6 +3,9 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const key = process.env.NEXT_PUBLIC_SUPABASE_KEY ?? ''
 
+export const SUPABASE_URL = url
+export const SUPABASE_KEY = key
+
 /** .env.local 에 Supabase 주소와 키가 들어 있는지 */
 export const isConfigured = /^https:\/\/.+/.test(url) && key.length > 20
 

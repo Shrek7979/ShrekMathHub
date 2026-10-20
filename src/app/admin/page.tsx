@@ -120,6 +120,7 @@ function Members({ only }: { only?: MemberStatus }) {
                   >
                     {STATUS_LABEL[m.status]}
                   </span>
+                  {m.status === 'pending' && !p.school && <span className="badge">신청서 작성 전</span>}
                   <span className="ml-auto text-xs text-slate-400" title={fullDate(m.created_at)}>
                     {timeAgo(m.created_at)} 신청
                   </span>
