@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { rememberReturnPath } from '@/lib/auth-helpers'
+import { SITE } from '@/lib/site'
 import { supabase } from '@/lib/supabase'
 import { ApplicationForm } from './Application'
 import { useAuth } from './AuthProvider'
@@ -35,7 +36,11 @@ export function Gate({ children, admin = false }: { children: React.ReactNode; a
   if (profile.status === 'rejected')
     return (
       <StatusCard title="이용이 제한된 계정이에요">
-        가입이 승인되지 않았거나 이용이 정지되었어요. 궁금한 점은 관리자에게 문의해 주세요.
+        가입이 승인되지 않았거나 이용이 정지되었어요. 궁금한 점은 관리자({' '}
+        <a href={`mailto:${SITE.contactEmail}`} className="font-semibold text-brand-700 underline">
+          {SITE.contactEmail}
+        </a>
+        )에게 문의해 주세요.
       </StatusCard>
     )
   if (!isApproved) return null
@@ -50,16 +55,33 @@ export function LoginNeeded() {
       <p>로그인하면 자료실과 게시판을 이용할 수 있어요.</p>
       <div className="mx-auto mt-5 max-w-xs">
         <GoogleButton />
-        <Link href="/signup" className="mt-3 inline-block text-sm text-slate-500 hover:text-slate-800">
-          처음이신가요? 가입 안내 보기
-        </Link>
+        <div className="mt-3 flex justify-center gap-4 text-sm">
+          <Link href="/login" className="text-slate-500 hover:text-slate-800">
+            이메일로 로그인
+          </Link>
+          <Link href="/signup" className="font-semibold text-brand-700">
+            처음이신가요? 가입 안내
+          </Link>
+        </div>
       </div>
     </StatusCard>
   )
 }
 
 export function PendingCard({ name }: { name: string }) {
-  const uid = useAuth().session?.user.id
+  const { session, refreshProfile } = useAuth()
+  const uid = session?.user.id
+
+  // 승인됐는지 따로 알려 주지 않으므로, 이 화면으로 돌아올 때와 1분마다 다시 확인한다
+  useEffect(() => {
+    const check = () => document.visibilityState === 'visible' && refreshProfile()
+    document.addEventListener('visibilitychange', check)
+    const timer = setInterval(check, 60_000)
+    return () => {
+      document.removeEventListener('visibilitychange', check)
+      clearInterval(timer)
+    }
+  }, [refreshProfile])
   // Google 로 처음 들어온 선생님은 아직 학교·확인 정보를 적지 않았다
   const [applied, setApplied] = useState<boolean | null>(null)
 
@@ -86,7 +108,7 @@ export function PendingCard({ name }: { name: string }) {
   return (
     <StatusCard title={`${name} 선생님, 가입 신청이 접수됐어요`}>
       <p>관리자가 선생님 정보를 확인한 뒤 승인해 드려요.</p>
-      <p className="mt-1">승인되면 이 화면을 새로 고쳤을 때 자료실과 게시판이 열려요.</p>
+      <p className="mt-1">승인되면 이 화면이 저절로 자료실·게시판이 있는 첫 화면으로 바뀌어요.</p>
       <button className="btn-secondary mt-5" onClick={() => window.location.reload()}>
         새로 고침
       </button>

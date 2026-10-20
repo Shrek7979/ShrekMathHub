@@ -10,12 +10,25 @@ export function rememberReturnPath(path = window.location.pathname + window.loca
   } catch {}
 }
 
+function safe(p: string | null) {
+  return p && p.startsWith('/') && !p.startsWith('//') ? p : null
+}
+
+/** 기억해 둔 화면을 보기만 한다 (지우지 않음) */
+export function peekReturnPath(): string | null {
+  try {
+    return safe(sessionStorage.getItem(RETURN_KEY))
+  } catch {
+    return null
+  }
+}
+
 /** 기억해 둔 화면 (같은 사이트 안의 주소만) — 한 번 꺼내면 지운다 */
 export function takeReturnPath(): string | null {
   try {
     const p = sessionStorage.getItem(RETURN_KEY)
     sessionStorage.removeItem(RETURN_KEY)
-    return p && p.startsWith('/') && !p.startsWith('//') ? p : null
+    return safe(p)
   } catch {
     return null
   }

@@ -30,6 +30,7 @@ function Teacher() {
 
   useEffect(() => {
     setFailed(false)
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return setProfile(null)
     Promise.all([
       supabase.from('profiles').select('*').eq('id', id).maybeSingle(),
       supabase

@@ -7,7 +7,7 @@ import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem } from '@/components/ListItems'
 import { Empty, LoadError, Spinner } from '@/components/ui'
 import { BOARD_CATEGORIES, NOTICE } from '@/lib/curriculum'
-import { cleanSearch } from '@/lib/format'
+import { POST_SEARCH_FIELDS, searchFilters } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/lib/types'
 
@@ -79,8 +79,7 @@ function Board() {
     let query = supabase.from('posts').select(POST_LIST_COLUMNS, { count: 'exact' })
     if (category) query = query.eq('category', category)
     else if (!q) query = query.neq('category', NOTICE)
-    const s = cleanSearch(q)
-    if (s) query = query.or(`title.ilike.%${s}%,body.ilike.%${s}%`)
+    for (const f of searchFilters(q, POST_SEARCH_FIELDS)) query = query.or(f)
     query
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })

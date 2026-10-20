@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
-import { Empty, Spinner } from '@/components/ui'
-import { cleanSearch } from '@/lib/format'
+import { Empty, LoadError, Spinner } from '@/components/ui'
+import { POST_SEARCH_FIELDS, RESOURCE_SEARCH_FIELDS, cleanSearch, searchFilters } from '@/lib/format'
 import { LINK_GROUPS } from '@/lib/links'
 import { supabase } from '@/lib/supabase'
 import type { Post, Resource } from '@/lib/types'
@@ -32,6 +32,8 @@ function Search() {
   const q = params.get('q') ?? ''
   const [text, setText] = useState(q)
   const [result, setResult] = useState<Result | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [reload, setReload] = useState(0)
   const s = cleanSearch(q)
 
   useEffect(() => {
@@ -42,21 +44,17 @@ function Search() {
     if (!s) return setResult(null)
     let cancelled = false
     setResult(null)
+    setFailed(false)
+    let rq = supabase.from('resources').select(RESOURCE_LIST_COLUMNS, { count: 'exact' })
+    for (const f of searchFilters(s, RESOURCE_SEARCH_FIELDS)) rq = rq.or(f)
+    let pq = supabase.from('posts').select(POST_LIST_COLUMNS, { count: 'exact' })
+    for (const f of searchFilters(s, POST_SEARCH_FIELDS)) pq = pq.or(f)
     Promise.all([
-      supabase
-        .from('resources')
-        .select(RESOURCE_LIST_COLUMNS, { count: 'exact' })
-        .or(`title.ilike.%${s}%,description.ilike.%${s}%,unit.ilike.%${s}%,subject.ilike.%${s}%`)
-        .order('created_at', { ascending: false })
-        .limit(LIMIT),
-      supabase
-        .from('posts')
-        .select(POST_LIST_COLUMNS, { count: 'exact' })
-        .or(`title.ilike.%${s}%,body.ilike.%${s}%`)
-        .order('created_at', { ascending: false })
-        .limit(LIMIT),
+      rq.order('created_at', { ascending: false }).limit(LIMIT),
+      pq.order('created_at', { ascending: false }).limit(LIMIT),
     ]).then(([r, p]) => {
       if (cancelled) return
+      if (r.error || p.error) return setFailed(true)
       setResult({
         resources: (r.data as unknown as Resource[]) ?? [],
         resourceCount: r.count ?? 0,
@@ -67,11 +65,11 @@ function Search() {
     return () => {
       cancelled = true
     }
-  }, [s])
+  }, [s, reload])
 
-  const lower = s.toLowerCase()
+  const words = s.toLowerCase().split(' ').filter(Boolean)
   const links = s
-    ? LINK_GROUPS.flatMap((g) => g.links).filter((l) => `${l.name} ${l.desc}`.toLowerCase().includes(lower))
+    ? LINK_GROUPS.flatMap((g) => g.links).filter((l) => words.every((w) => `${l.name} ${l.desc}`.toLowerCase().includes(w)))
     : []
 
   return (
@@ -90,13 +88,18 @@ function Search() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="자료·게시글·링크에서 찾기 (예: 이차함수, 수행평가, GeoGebra)"
-          autoFocus
+          // 이미 찾은 결과가 있으면 휴대폰 자판이 결과를 가리지 않게
+          autoFocus={!q}
         />
         <button className="btn-primary shrink-0 px-5">찾기</button>
       </form>
 
       {!s ? (
-        <p className="mt-6 text-sm text-slate-500">찾을 낱말을 넣어 주세요.</p>
+        <p className="mt-6 text-sm text-slate-500">찾을 낱말을 넣어 주세요. 여러 낱말을 띄어 쓰면 모두 들어 있는 것만 찾아요.</p>
+      ) : failed ? (
+        <div className="mt-6">
+          <LoadError onRetry={() => setReload((n) => n + 1)} />
+        </div>
       ) : !result ? (
         <Spinner label="찾는 중…" />
       ) : result.resourceCount + result.postCount + links.length === 0 ? (

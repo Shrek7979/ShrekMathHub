@@ -6,12 +6,13 @@ import { BOARD_CATEGORIES, NOTICE } from '@/lib/curriculum'
 import { koError } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/lib/types'
+import { useDraft } from '@/lib/useDraft'
 import { useAuth } from './AuthProvider'
 import { MarkdownEditor } from './MarkdownEditor'
-import { ErrorBox } from './ui'
+import { DraftNotice, ErrorBox } from './ui'
 
 /** 게시판 글쓰기 / 고치기 */
-export function PostForm({ initial, defaultCategory }: { initial?: Post; defaultCategory?: string }) {
+export function PostForm({ initial, defaultCategory, defaultTitle }: { initial?: Post; defaultCategory?: string; defaultTitle?: string }) {
   const router = useRouter()
   const { isAdmin } = useAuth()
   // 공지는 관리자만 (데이터베이스 규칙도 같은 내용으로 막고 있음)
@@ -19,10 +20,21 @@ export function PostForm({ initial, defaultCategory }: { initial?: Post; default
   const [category, setCategory] = useState(
     initial?.category ?? (defaultCategory && categories.includes(defaultCategory) ? defaultCategory : '질문'),
   )
-  const [title, setTitle] = useState(initial?.title ?? '')
+  const [title, setTitle] = useState(initial?.title ?? defaultTitle?.slice(0, 120) ?? '')
   const [body, setBody] = useState(initial?.body ?? '')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // 새 글은 쓰는 동안 이 브라우저에 임시 저장 (고치기·자료 요청 글은 제외)
+  const draft = useDraft(
+    'smh-draft-post',
+    { category, title, body },
+    (d) => {
+      if (categories.includes(d.category)) setCategory(d.category)
+      setTitle(d.title ?? '')
+      setBody(d.body ?? '')
+    },
+    !initial && !defaultTitle,
+  )
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,11 +48,21 @@ export function PostForm({ initial, defaultCategory }: { initial?: Post; default
     setBusy(false)
     if (error) return setError(koError(error))
     if (!data) return setError('저장하지 못했어요. 권한이 없거나 이미 지워진 글이에요.')
+    draft.clear()
     router.push(`/board/${data.id}`)
   }
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      {draft.restored && (
+        <DraftNotice
+          onDiscard={() => {
+            draft.clear()
+            setTitle('')
+            setBody('')
+          }}
+        />
+      )}
       <div>
         <span className="label">분류</span>
         <div className="flex flex-wrap gap-2">

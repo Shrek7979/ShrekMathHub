@@ -77,10 +77,27 @@ function Landing() {
   )
 }
 
+// 지난 방문 시각 (이 브라우저 기준): 사이트를 연 뒤 처음 한 번만 읽고 지금으로 바꿔 둔다
+let lastVisitCache: string | null | undefined
+function takeLastVisit() {
+  if (lastVisitCache === undefined) {
+    try {
+      lastVisitCache = localStorage.getItem('smh-last-visit')
+      localStorage.setItem('smh-last-visit', new Date().toISOString())
+    } catch {
+      lastVisitCache = null
+    }
+  }
+  return lastVisitCache
+}
+
 type HomeData = {
   notice: Post | null
   featured: Resource[]
   recent: Resource[]
+  popular: Resource[]
+  /** 지난번에 들어온 뒤 새로 올라온 자료 수 (처음이면 null) */
+  newSince: number | null
   posts: Post[]
   questions: Post[]
 }
@@ -95,13 +112,18 @@ function Dashboard() {
   useEffect(() => {
     const res = () => supabase.from('resources').select(RESOURCE_LIST_COLUMNS)
     const posts = () => supabase.from('posts').select(POST_LIST_COLUMNS)
+    const lastVisit = takeLastVisit()
     Promise.all([
       posts().eq('category', NOTICE).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       res().eq('featured', true).order('created_at', { ascending: false }).limit(4),
       res().order('created_at', { ascending: false }).limit(5),
       posts().neq('category', NOTICE).order('created_at', { ascending: false }).limit(6),
       posts().eq('category', QUESTION).eq('solved', false).order('created_at', { ascending: false }).limit(4),
-    ]).then(([n, f, r, p, q]) => {
+      res().gt('download_count', 0).order('download_count', { ascending: false }).limit(5),
+      lastVisit
+        ? supabase.from('resources').select('id', { count: 'exact', head: true }).gt('created_at', lastVisit)
+        : Promise.resolve({ count: null }),
+    ]).then(([n, f, r, p, q, pop, since]) => {
       if (r.error || p.error) return setFailed(true)
       setFailed(false)
       setData({
@@ -110,6 +132,8 @@ function Dashboard() {
         recent: (r.data as unknown as Resource[]) ?? [],
         posts: (p.data as unknown as Post[]) ?? [],
         questions: (q.data as unknown as Post[]) ?? [],
+        popular: (pop.data as unknown as Resource[]) ?? [],
+        newSince: since.count ?? null,
       })
     })
   }, [reload])
@@ -184,7 +208,11 @@ function Dashboard() {
 
           <div className="mt-8 grid gap-8 lg:grid-cols-5">
             <section className="lg:col-span-3">
-              <SectionHead title="새로 올라온 자료" href="/resources" />
+              <SectionHead
+                title="새로 올라온 자료"
+                href="/resources"
+                badge={data.newSince ? `지난 방문 이후 ${data.newSince}개` : undefined}
+              />
               {data.recent.length === 0 ? (
                 <FirstOne href="/resources/new" text={isAdmin ? '첫 자료를 올려 허브를 열어 주세요!' : '아직 자료가 없어요. 첫 자료를 올려 주세요!'} />
               ) : (
@@ -197,6 +225,22 @@ function Dashboard() {
             </section>
 
             <div className="space-y-8 lg:col-span-2">
+              {data.popular.length > 0 && (
+                <section>
+                  <SectionHead title="📈 많이 받은 자료" href="/resources?sort=popular" />
+                  <ol className="card divide-y divide-slate-100 overflow-hidden text-sm">
+                    {data.popular.map((r, i) => (
+                      <li key={r.id}>
+                        <Link href={`/resources/${r.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                          <span className="w-4 font-bold text-brand-600">{i + 1}</span>
+                          <span className="min-w-0 flex-1 truncate">{r.title}</span>
+                          <span className="text-xs tabular-nums text-slate-500">⬇ {r.download_count}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
               {data.questions.length > 0 && (
                 <section>
                   <SectionHead title="🙋 답을 기다리는 질문" href={`/board?category=${encodeURIComponent(QUESTION)}`} />
@@ -321,10 +365,13 @@ function HubSearch() {
   )
 }
 
-function SectionHead({ title, href, more = '더 보기 →' }: { title: string; href: string; more?: string }) {
+function SectionHead({ title, href, more = '더 보기 →', badge }: { title: string; href: string; more?: string; badge?: string }) {
   return (
-    <div className="mb-3 flex items-center justify-between">
-      <h2 className="font-bold text-slate-900">{title}</h2>
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h2 className="font-bold text-slate-900">
+        {title}
+        {badge && <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 align-middle text-[11px] font-bold text-white">{badge}</span>}
+      </h2>
       <Link href={href} className="text-sm text-slate-500 hover:text-brand-700">
         {more}
       </Link>

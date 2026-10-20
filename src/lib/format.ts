@@ -28,6 +28,22 @@ export function cleanSearch(q: string) {
   return q.replace(/[,()%*\\"'.:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50)
 }
 
+export const RESOURCE_SEARCH_FIELDS = ['title', 'description', 'unit', 'subject', 'resource_type']
+export const POST_SEARCH_FIELDS = ['title', 'body']
+
+/**
+ * 찾기: 낱말마다 "어느 칸에든 들어 있음" 조건을 만들고, 낱말끼리는 모두 만족(AND)하게 한다.
+ * 예) "이차함수 활동지" → 제목이 "이차함수 그래프 평행이동 활동지" 인 자료도 찾음.
+ * 쓰는 법: for (const f of searchFilters(q, FIELDS)) query = query.or(f)
+ */
+export function searchFilters(q: string, fields: string[]) {
+  return cleanSearch(q)
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((w) => fields.map((f) => `${f}.ilike.%${w}%`).join(','))
+}
+
 /** Supabase 오류를 선생님이 읽을 수 있는 말로 */
 export function koError(e: unknown): string {
   const msg = typeof e === 'string' ? e : (e as { message?: string })?.message ?? ''

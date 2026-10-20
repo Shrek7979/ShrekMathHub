@@ -49,7 +49,7 @@ export function NewsPanel() {
         </button>
       )
     return (
-      <aside className="sticky top-[57px] flex h-[calc(100vh-57px)] w-[400px] shrink-0 flex-col self-start border-l border-slate-200 bg-white xl:w-[440px]">
+      <aside className="sticky top-[57px] flex h-[calc(100vh-57px)] w-[340px] shrink-0 flex-col self-start border-l border-slate-200 bg-white xl:w-[400px] 2xl:w-[440px]">
         <PanelHeader onClose={() => remember(false)} closeLabel="접기 ›" />
         <NewsFrame />
       </aside>

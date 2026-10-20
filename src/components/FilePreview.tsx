@@ -20,6 +20,9 @@ export function FilePreview({ file }: { file: FileInfo }) {
   const [url, setUrl] = useState<string | null>(null)
   const [text, setText] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [touch, setTouch] = useState(false)
+
+  useEffect(() => setTouch(window.matchMedia('(pointer: coarse)').matches), [])
 
   useEffect(() => {
     let cancelled = false
@@ -29,7 +32,9 @@ export function FilePreview({ file }: { file: FileInfo }) {
       if (error || !data) return setError(koError(error))
       if (!TEXT.includes(ext)) return setUrl(data.signedUrl)
       // 글 파일은 직접 읽어서 보여 준다 (UTF-8 이 아니면 학교에서 흔한 EUC-KR 로)
-      const buf = await (await fetch(data.signedUrl)).arrayBuffer()
+      const res = await fetch(data.signedUrl)
+      if (!res.ok) throw new Error(res.status === 400 || res.status === 404 ? 'Object not found' : `HTTP ${res.status}`)
+      const buf = await res.arrayBuffer()
       if (cancelled) return
       let decoded: string
       try {
@@ -61,7 +66,13 @@ export function FilePreview({ file }: { file: FileInfo }) {
       )}
       {url && AUDIO.includes(ext) && <audio src={url} controls className="w-full" />}
       {url && VIDEO.includes(ext) && <video src={url} controls className="max-h-[70vh] w-full rounded-md bg-black" />}
-      {url && PDF.includes(ext) && (
+      {url && PDF.includes(ext) && touch && (
+        // 안드로이드 휴대폰은 화면 안 PDF 를 빈칸으로 보여 주므로 바로 열기
+        <a href={url} target="_blank" rel="noopener noreferrer" className="btn-primary w-full">
+          PDF 열기 ↗
+        </a>
+      )}
+      {url && PDF.includes(ext) && !touch && (
         <>
           <iframe src={url} title={file.name} className="h-[70vh] w-full rounded-md border border-slate-200 bg-white" />
           <p className="mt-2 text-right text-xs">

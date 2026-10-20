@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ApplicationFields, checkApplication, emptyApplication } from '@/components/Application'
 import { useAuth } from '@/components/AuthProvider'
-import { GoogleButton } from '@/components/GoogleButton'
+import { GoogleBlockedNote, GoogleButton } from '@/components/GoogleButton'
 import { ErrorBox } from '@/components/ui'
 import { koError } from '@/lib/format'
 import { NOT_CONFIGURED_MESSAGE, isConfigured, supabase } from '@/lib/supabase'
@@ -83,10 +83,7 @@ export default function SignupPage() {
           </li>
         </ol>
         <GoogleButton label="Google 계정으로 가입 신청" />
-        <p className="mt-3 text-xs leading-relaxed text-slate-400">
-          Google 화면에서 &lsquo;액세스 차단됨&rsquo;이 나오면 아직 등록되지 않은 계정이라서 그래요. 아래 <b>이메일로 가입</b>을 쓰거나,
-          관리자에게 Gmail 주소를 알려 주세요.
-        </p>
+        <GoogleBlockedNote />
       </div>
 
       <details className="mt-4 text-sm">

@@ -13,7 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'ko',
     icons: [
       { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },
-      { src: '/apple-icon', sizes: '180x180', type: 'image/png' },
+      { src: '/pwa-icon/192', sizes: '192x192', type: 'image/png' },
+      { src: '/pwa-icon/512', sizes: '512x512', type: 'image/png', purpose: 'any' },
     ],
   }
 }

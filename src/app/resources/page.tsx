@@ -7,7 +7,7 @@ import { Gate } from '@/components/Gate'
 import { RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
 import { Empty, LoadError, Spinner } from '@/components/ui'
 import { RESOURCE_TYPES, SUBJECTS } from '@/lib/curriculum'
-import { cleanSearch } from '@/lib/format'
+import { RESOURCE_SEARCH_FIELDS, searchFilters } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { Resource, SchoolLevel } from '@/lib/types'
 
@@ -67,8 +67,7 @@ function ResourceList() {
       if (type) query = query.eq('resource_type', type)
       if (unit) query = query.eq('unit', unit)
       if (featured) query = query.eq('featured', true)
-      const s = cleanSearch(q)
-      if (s) query = query.or(`title.ilike.%${s}%,description.ilike.%${s}%,unit.ilike.%${s}%`)
+      for (const f of searchFilters(q, RESOURCE_SEARCH_FIELDS)) query = query.or(f)
       query = query
         .order(sort === 'popular' ? 'download_count' : 'created_at', { ascending: false })
         .order('id', { ascending: false })

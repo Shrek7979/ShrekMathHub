@@ -8,6 +8,7 @@ import { useAuth } from './AuthProvider'
 import { AuthorName } from './ListItems'
 import { Markdown } from './Markdown'
 import { ReportButton } from './ReportButton'
+import { LoadError } from './ui'
 
 export function CommentSection({ target }: { target: Target }) {
   const { session, isAdmin } = useAuth()
@@ -17,14 +18,16 @@ export function CommentSection({ target }: { target: Target }) {
   const [comments, setComments] = useState<Comment[] | null>(null)
   const [body, setBody] = useState('')
   const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const load = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('comments')
       .select('*, author:profiles(name, role)')
       .eq(key, id)
       .order('created_at', { ascending: true })
-    setComments((data as Comment[]) ?? [])
+    setFailed(!!error)
+    if (!error) setComments((data as Comment[]) ?? [])
   }, [key, id])
 
   useEffect(() => {
@@ -55,6 +58,11 @@ export function CommentSection({ target }: { target: Target }) {
         댓글 {comments && comments.length > 0 && <span className="text-brand-600">{comments.length}</span>}
       </h2>
 
+      {failed && (
+        <div className="mt-3">
+          <LoadError onRetry={load}>댓글을 불러오지 못했어요.</LoadError>
+        </div>
+      )}
       <ul className="mt-3 space-y-3">
         {comments?.map((c) => (
           <li key={c.id} className="card px-4 py-3">
@@ -77,7 +85,7 @@ export function CommentSection({ target }: { target: Target }) {
             </div>
           </li>
         ))}
-        {comments?.length === 0 && <li className="text-sm text-slate-400">첫 댓글을 남겨 주세요.</li>}
+        {!failed && comments?.length === 0 && <li className="text-sm text-slate-400">첫 댓글을 남겨 주세요.</li>}
       </ul>
 
       <form onSubmit={submit} className="mt-4">

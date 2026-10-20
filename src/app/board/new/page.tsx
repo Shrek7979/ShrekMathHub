@@ -23,5 +23,5 @@ export default function NewPostPage() {
 
 function NewPost() {
   const params = useSearchParams()
-  return <PostForm defaultCategory={params.get('category') ?? undefined} />
+  return <PostForm defaultCategory={params.get('category') ?? undefined} defaultTitle={params.get('title') ?? undefined} />
 }

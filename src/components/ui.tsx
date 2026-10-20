@@ -30,6 +30,18 @@ export function LoadError({ onRetry, children }: { onRetry: () => void; children
   )
 }
 
+/** 임시 저장해 둔 글을 불러왔을 때 */
+export function DraftNotice({ onDiscard }: { onDiscard: () => void }) {
+  return (
+    <p className="flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+      💾 쓰다 만 내용을 불러왔어요.
+      <button type="button" onClick={onDiscard} className="ml-auto text-xs font-semibold underline">
+        지우고 새로 쓰기
+      </button>
+    </p>
+  )
+}
+
 export function ErrorBox({ children }: { children: React.ReactNode }) {
   if (!children) return null
   return (

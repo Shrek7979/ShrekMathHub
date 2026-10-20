@@ -8,9 +8,10 @@ import { ACCEPT, MAX_FILES, checkFile, removeFiles, uploadFile } from '@/lib/fil
 import { fileSize, koError } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { FileInfo, Resource, SchoolLevel } from '@/lib/types'
+import { useDraft } from '@/lib/useDraft'
 import { useAuth } from './AuthProvider'
 import { MarkdownEditor } from './MarkdownEditor'
-import { ErrorBox } from './ui'
+import { DraftNotice, ErrorBox } from './ui'
 
 /** 자료 올리기 / 고치기 */
 export function ResourceForm({ initial }: { initial?: Resource }) {
@@ -29,6 +30,21 @@ export function ResourceForm({ initial }: { initial?: Resource }) {
   const [added, setAdded] = useState<File[]>([])
   const [agreeCopyright, setAgreeCopyright] = useState(!!initial)
   const [agreePrivacy, setAgreePrivacy] = useState(!!initial)
+  // 새 자료는 적던 글을 임시 저장 (파일은 저장할 수 없어서 다시 골라야 함)
+  const draft = useDraft(
+    'smh-draft-resource',
+    { title, level, subject, unit, type, description, link },
+    (d) => {
+      setTitle(d.title ?? '')
+      if (d.level === '중' || d.level === '고') setLevel(d.level)
+      if (d.subject) setSubject(d.subject)
+      setUnit(d.unit ?? '')
+      setType(d.type ?? '')
+      setDescription(d.description ?? '')
+      setLink(d.link ?? '')
+    },
+    !initial,
+  )
   const [error, setError] = useState('')
   const [progress, setProgress] = useState('')
 
@@ -91,6 +107,7 @@ export function ResourceForm({ initial }: { initial?: Resource }) {
         const keptPaths = new Set(kept.map((f) => f.path))
         await removeFiles(initial.files.filter((f) => !keptPaths.has(f.path)).map((f) => f.path), initial.author_id)
       }
+      draft.clear()
       router.push(`/resources/${data.id}`)
     } catch (err) {
       await removeFiles(uploaded.map((f) => f.path), uid)
@@ -101,6 +118,18 @@ export function ResourceForm({ initial }: { initial?: Resource }) {
 
   return (
     <form onSubmit={submit} className="space-y-6">
+      {draft.restored && (
+        <DraftNotice
+          onDiscard={() => {
+            draft.clear()
+            setTitle('')
+            setUnit('')
+            setType('')
+            setDescription('')
+            setLink('')
+          }}
+        />
+      )}
       <div>
         <label className="label" htmlFor="title">
           제목 <Req />

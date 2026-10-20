@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
-import { GoogleButton } from '@/components/GoogleButton'
+import { GoogleBlockedNote, GoogleButton } from '@/components/GoogleButton'
 import { ErrorBox } from '@/components/ui'
 import { takeReturnPath } from '@/lib/auth-helpers'
 import { koError } from '@/lib/format'
@@ -30,7 +30,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     setBusy(false)
     if (error) return setError(koError(error))
-    router.replace(takeReturnPath() ?? '/')
+    // 이동은 아래 [session] effect 가 한 번만 한다
   }
 
   return (
@@ -39,6 +39,7 @@ export default function LoginPage() {
       <div className="card mt-6 p-5">
         <GoogleButton />
         <p className="mt-3 text-center text-xs text-slate-500">처음이라면 Google로 들어온 뒤 가입 신청서를 적으면 돼요.</p>
+        <GoogleBlockedNote />
       </div>
 
       <details className="mt-4 text-sm">

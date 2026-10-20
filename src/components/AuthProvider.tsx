@@ -60,6 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadProfile(userId)
   }, [sessionReady, userId, loadProfile])
 
+  const refreshProfile = useCallback(() => loadProfile(userId), [loadProfile, userId])
+
   const value: AuthState = {
     session,
     profile,
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isApproved: profile?.status === 'approved',
     isAdmin: profile?.status === 'approved' && profile.role === 'admin',
     profileError,
-    refreshProfile: () => loadProfile(userId),
+    refreshProfile,
     signOut: async () => {
       await supabase.auth.signOut()
     },

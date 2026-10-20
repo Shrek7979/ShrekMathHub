@@ -9,6 +9,7 @@ import { Gate } from '@/components/Gate'
 import { Markdown } from '@/components/Markdown'
 import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
+import { ShareButton } from '@/components/ShareButton'
 import { AuthorName } from '@/components/ListItems'
 import { Empty, LoadError, Spinner } from '@/components/ui'
 import { NOTICE, QUESTION } from '@/lib/curriculum'
@@ -35,6 +36,7 @@ function Detail() {
 
   useEffect(() => {
     setFailed(false)
+    if (!Number.isInteger(pid) || pid <= 0) return setP(null)
     supabase
       .from('posts')
       .select('*, author:profiles(name, role)')
@@ -110,6 +112,7 @@ function Detail() {
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Reactions target={{ postId: p.id }} />
+        <ShareButton title={p.title} />
         <div className="ml-auto flex items-center gap-3">
           {!mine && <ReportButton postId={p.id} />}
           {mine && p.category === QUESTION && (

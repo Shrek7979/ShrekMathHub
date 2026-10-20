@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
-import { Empty, Spinner } from '@/components/ui'
+import { copyText } from '@/components/ShareButton'
+import { Empty, LoadError, Spinner } from '@/components/ui'
 import { LEVEL_LABEL } from '@/lib/curriculum'
 import { removeFiles } from '@/lib/files'
 import { fileSize, fullDate, koError, timeAgo } from '@/lib/format'
@@ -65,14 +66,16 @@ function privOf(m: Member): ProfilePrivate {
 function Members({ only }: { only?: MemberStatus }) {
   const myId = useAuth().session?.user.id
   const [items, setItems] = useState<Member[] | null>(null)
+  const [failed, setFailed] = useState(false)
   const [filter, setFilter] = useState<MemberStatus | ''>('')
   const [q, setQ] = useState('')
 
   const load = useCallback(async () => {
     let query = supabase.from('profiles').select('*, profile_private(email, school, note)').order('created_at', { ascending: false })
     if (only) query = query.eq('status', only)
-    const { data } = await query
-    setItems((data as unknown as Member[]) ?? [])
+    const { data, error } = await query
+    setFailed(!!error)
+    if (!error) setItems((data as unknown as Member[]) ?? [])
   }, [only])
 
   useEffect(() => {
@@ -86,8 +89,13 @@ function Members({ only }: { only?: MemberStatus }) {
     const { error } = await supabase.rpc('admin_set_member', { target: m.id, new_status: status, new_role: role ?? null })
     if (error) return alert(koError(error))
     load()
+    // 막 승인했다면 카카오톡 등에 붙여 넣을 안내 문구를 바로 복사해 준다
+    if (status === 'approved' && !role && m.status !== 'approved' && (await copyWelcome(m.name))) {
+      alert(`${m.name} 선생님을 승인했어요. 안내 문구를 복사했으니 카카오톡이나 메일에 붙여 넣어 알려 주세요.`)
+    }
   }
 
+  if (failed) return <LoadError onRetry={load} />
   if (!items) return <Spinner />
 
   const shown = items.filter((m) => {
@@ -155,6 +163,11 @@ function Members({ only }: { only?: MemberStatus }) {
                       </button>
                     )}
                     {m.status === 'approved' && (
+                      <button className="btn-secondary btn-sm" onClick={() => copyWelcome(m.name)}>
+                        📋 승인 안내 복사
+                      </button>
+                    )}
+                    {m.status === 'approved' && (
                       <button
                         className="btn-ghost btn-sm"
                         onClick={() => set(m, 'approved', m.role === 'admin' ? 'member' : 'admin')}
@@ -186,6 +199,7 @@ type Report = {
 
 function Reports() {
   const [items, setItems] = useState<Report[] | null>(null)
+  const [failed, setFailed] = useState(false)
   const [showClosed, setShowClosed] = useState(false)
 
   const load = useCallback(async () => {
@@ -196,8 +210,9 @@ function Reports() {
       )
       .order('created_at', { ascending: false })
     if (!showClosed) query = query.eq('status', 'open')
-    const { data } = await query
-    setItems((data as unknown as Report[]) ?? [])
+    const { data, error } = await query
+    setFailed(!!error)
+    if (!error) setItems((data as unknown as Report[]) ?? [])
   }, [showClosed])
 
   useEffect(() => {
@@ -226,6 +241,7 @@ function Reports() {
     load()
   }
 
+  if (failed) return <LoadError onRetry={load} />
   if (!items) return <Spinner />
 
   return (
@@ -276,6 +292,16 @@ function Reports() {
   )
 }
 
+/** 승인된 선생님에게 보낼 안내 문구 */
+function copyWelcome(name: string) {
+  return copyText(
+    `[Shrek Math Hub] ${name} 선생님, 가입이 승인되었어요! 🎉
+` +
+      `${window.location.origin} 에 들어가서 처음 가입하신 방법(Google 또는 이메일)으로 로그인하면 ` +
+      `자료실·교육과정 지도·게시판을 모두 쓸 수 있어요.`,
+  )
+}
+
 type StatsData = {
   members: number
   pending: number
@@ -296,7 +322,17 @@ function Stats() {
     supabase.rpc('admin_stats').then(({ data, error }) => (error ? setError(koError(error)) : setS(data as StatsData)))
   }, [reload])
 
-  if (error) return <Empty>{error}</Empty>
+  if (error)
+    return (
+      <LoadError
+        onRetry={() => {
+          setError('')
+          setReload((n) => n + 1)
+        }}
+      >
+        {error}
+      </LoadError>
+    )
   if (!s) return <Spinner />
 
   const used = s.storage_bytes / SITE.storageLimitBytes

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { inAppBrowser, openInExternalBrowser, rememberReturnPath } from '@/lib/auth-helpers'
+import { inAppBrowser, openInExternalBrowser, peekReturnPath } from '@/lib/auth-helpers'
 import { koError } from '@/lib/format'
 import { NOT_CONFIGURED_MESSAGE, SUPABASE_KEY, SUPABASE_URL, isConfigured, supabase } from '@/lib/supabase'
 
@@ -27,12 +27,13 @@ export function GoogleButton({ label = 'Google로 계속하기' }: { label?: str
       setBusy(false)
       return setError(NOT_ENABLED)
     }
-    // 로그인하고 돌아오면 지금 보던 화면으로 (Supabase 가 허락한 주소는 첫 화면이라 거기서 다시 옮겨 준다)
-    rememberReturnPath()
+    // 로그인하고 돌아올 곳: 지금 보던 화면 (로그인·가입 화면에서 눌렀다면 그 전에 보던 화면)
+    const here = window.location.pathname + window.location.search
+    const back = /^\/(login|signup)/.test(window.location.pathname) ? (peekReturnPath() ?? '/') : here
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${window.location.origin}${back}`,
         // 학교 계정·개인 계정 중 고를 수 있게
         queryParams: { prompt: 'select_account' },
       },
@@ -78,6 +79,16 @@ export function GoogleButton({ label = 'Google로 계속하기' }: { label?: str
         </p>
       )}
     </div>
+  )
+}
+
+/** Google 테스트 모드 동안 등록 안 된 계정이 보는 '액세스 차단됨' 안내 */
+export function GoogleBlockedNote() {
+  return (
+    <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+      Google 화면에 <b>&lsquo;액세스 차단됨&rsquo;</b>이 나오면 아직 관리자가 등록하지 않은 계정이에요. 관리자에게 Gmail 주소를 알려
+      주시거나, 아래 <b>이메일</b>로 가입·로그인해 주세요.
+    </p>
   )
 }
 

@@ -1,12 +1,12 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
 import { PostForm } from '@/components/PostForm'
-import { Empty, Spinner } from '@/components/ui'
+import { Empty, LoadError, Spinner } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
+import { useQuery } from '@/lib/useQuery'
 import type { Post } from '@/lib/types'
 
 export default function EditPostPage() {
@@ -20,18 +20,12 @@ export default function EditPostPage() {
 function Edit() {
   const { id } = useParams<{ id: string }>()
   const { session } = useAuth()
-  const [p, setP] = useState<Post | null | undefined>(undefined)
-
-  useEffect(() => {
-    supabase
-      .from('posts')
-      .select('*')
-      .eq('id', Number(id))
-      .maybeSingle()
-      .then(({ data }) => setP((data as Post | null) ?? null))
-  }, [id])
-
-  if (p === undefined) return <Spinner />
+  const { data: p, loading, failed, retry } = useQuery<Post | null>(
+    () => supabase.from('posts').select('*').eq('id', Number(id)).maybeSingle(),
+    [id],
+  )
+  if (failed) return <LoadError onRetry={retry} />
+  if (loading) return <Spinner />
   if (p === null || p.author_id !== session?.user.id) return <Empty>고칠 수 있는 글이 아니에요.</Empty>
   return (
     <div className="mx-auto max-w-3xl">

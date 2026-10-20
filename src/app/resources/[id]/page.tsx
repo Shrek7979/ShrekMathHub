@@ -11,6 +11,7 @@ import { AuthorName, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/Li
 import { Markdown } from '@/components/Markdown'
 import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
+import { ShareButton } from '@/components/ShareButton'
 import { Empty, LoadError, Spinner } from '@/components/ui'
 import { LEVEL_LABEL } from '@/lib/curriculum'
 import { embedOf } from '@/lib/embed'
@@ -40,6 +41,8 @@ function Detail() {
 
   useEffect(() => {
     setFailed(false)
+    // 주소가 잘못됐으면(숫자가 아님) 묻지 않고 '없는 자료'로
+    if (!Number.isInteger(rid) || rid <= 0) return setR(null)
     supabase
       .from('resources')
       .select('*, author:profiles(name, role)')
@@ -208,6 +211,7 @@ function Detail() {
 
       <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
         <Reactions target={{ resourceId: r.id }} />
+        <ShareButton title={r.title} />
         <div className="ml-auto flex flex-wrap items-center gap-3">
           {!mine && <ReportButton resourceId={r.id} />}
           {isAdmin && (
@@ -238,6 +242,7 @@ function Detail() {
 /** 같은 과목(같은 단원 먼저)의 다른 자료 */
 function RelatedResources({ current }: { current: Resource }) {
   const [items, setItems] = useState<Resource[] | null>(null)
+  const [unitMatch, setUnitMatch] = useState(false)
 
   useEffect(() => {
     supabase
@@ -253,6 +258,7 @@ function RelatedResources({ current }: { current: Resource }) {
         const sameUnit = rows.filter((x) => current.unit && x.unit === current.unit)
         const others = rows.filter((x) => !sameUnit.includes(x))
         setItems([...sameUnit, ...others].slice(0, 4))
+        setUnitMatch(sameUnit.length > 0)
       })
   }, [current.id, current.school_level, current.subject, current.unit])
 
@@ -262,7 +268,7 @@ function RelatedResources({ current }: { current: Resource }) {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-bold text-slate-900">
           {current.subject}
-          {current.unit && ` · ${current.unit}`} 다른 자료
+          {unitMatch && ` · ${current.unit}`} 다른 자료
         </h2>
         <Link
           href={`/resources?level=${current.school_level}&subject=${encodeURIComponent(current.subject)}`}

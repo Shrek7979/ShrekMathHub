@@ -5,14 +5,12 @@ import { AuthProvider } from '@/components/AuthProvider'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { NewsPanel } from '@/components/NewsPanel'
-import { ReturnAfterLogin } from '@/components/ReturnAfterLogin'
 import { SetupNotice } from '@/components/SetupNotice'
 import { isConfigured } from '@/lib/supabase'
 
 export const metadata: Metadata = {
   title: { default: 'Shrek Math Hub', template: '%s · Shrek Math Hub' },
   description: '중·고등학교 수학 선생님들이 수업 자료와 고민을 나누는 곳',
-  icons: { icon: '/icon.svg' },
   openGraph: {
     title: 'Shrek Math Hub',
     description: '중·고 수학 선생님들의 나눔터 — 수업 자료, 교육과정 지도, 오늘의 수학 뉴스',
@@ -40,7 +38,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <AuthProvider>
           <Header />
-          <ReturnAfterLogin />
           {/* 왼쪽: 사이트 화면, 오른쪽: Shrek Edu Insight 수학 뉴스 (늘 보임) */}
           <div className="flex w-full flex-1">
             <div className="flex min-w-0 flex-1 flex-col">

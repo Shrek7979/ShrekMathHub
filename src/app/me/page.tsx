@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
-import { POST_LIST_COLUMNS, PostItem, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
-import { Empty, ErrorBox, Spinner } from '@/components/ui'
+import { AuthorName, POST_LIST_COLUMNS, PostItem, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
+import { Empty, ErrorBox, LoadError, Spinner } from '@/components/ui'
 import { LEVEL_LABEL } from '@/lib/curriculum'
 import { koError, timeAgo } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
+import { useQuery } from '@/lib/useQuery'
 import type { MemberLevel, Post, ProfilePrivate, Resource } from '@/lib/types'
 
 type Tab = 'comments' | 'resources' | 'posts' | 'saved' | 'profile'
@@ -53,37 +54,38 @@ type Received = {
   id: number
   body: string
   created_at: string
-  author: { name: string } | null
-  resource: { id: number; title: string } | null
-  post: { id: number; title: string } | null
+  author: { name: string; role?: string } | null
+  resource?: { id: number; title: string } | null
+  post?: { id: number; title: string } | null
 }
 
-/** 내 자료·내 글에 다른 선생님이 남긴 댓글 (최근 30개) */
+/** 내 자료·내 글(오래된 것 포함)에 다른 선생님이 남긴 댓글 (최근 30개) */
 function ReceivedComments() {
   const uid = useAuth().session?.user.id
-  const [items, setItems] = useState<Received[] | null>(null)
-
-  useEffect(() => {
-    if (!uid) return
-    async function load() {
-      const [r, p] = await Promise.all([
-        supabase.from('resources').select('id').eq('author_id', uid).order('created_at', { ascending: false }).limit(200),
-        supabase.from('posts').select('id').eq('author_id', uid).order('created_at', { ascending: false }).limit(200),
-      ])
-      const rids = (r.data ?? []).map((x) => x.id as number)
-      const pids = (p.data ?? []).map((x) => x.id as number)
-      const cols = 'id, body, created_at, author:profiles(name, role), resource:resources(id, title), post:posts(id, title)'
-      const [a, b] = await Promise.all([
-        rids.length ? supabase.from('comments').select(cols).in('resource_id', rids).neq('author_id', uid).order('created_at', { ascending: false }).limit(30) : null,
-        pids.length ? supabase.from('comments').select(cols).in('post_id', pids).neq('author_id', uid).order('created_at', { ascending: false }).limit(30) : null,
-      ])
-      const all = [...((a?.data as unknown as Received[]) ?? []), ...((b?.data as unknown as Received[]) ?? [])]
-      all.sort((x, y) => y.created_at.localeCompare(x.created_at))
-      setItems(all.slice(0, 30))
-    }
-    load()
+  const { data: items, failed, retry } = useQuery<Received[]>(async () => {
+    const base = 'id, body, created_at, author:profiles(name, role)'
+    const [a, b] = await Promise.all([
+      supabase
+        .from('comments')
+        .select(`${base}, resource:resources!inner(id, title, author_id)`)
+        .eq('resource.author_id', uid)
+        .neq('author_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(30),
+      supabase
+        .from('comments')
+        .select(`${base}, post:posts!inner(id, title, author_id)`)
+        .eq('post.author_id', uid)
+        .neq('author_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(30),
+    ])
+    const all = [...((a.data ?? []) as unknown as Received[]), ...((b.data ?? []) as unknown as Received[])]
+    all.sort((x, y) => y.created_at.localeCompare(x.created_at))
+    return { data: all.slice(0, 30), error: a.error ?? b.error }
   }, [uid])
 
+  if (failed) return <LoadError onRetry={retry} />
   if (!items) return <Spinner />
   if (items.length === 0) return <Empty>아직 받은 댓글이 없어요. 자료를 나누면 선생님들의 이야기가 여기에 모여요.</Empty>
   return (
@@ -92,11 +94,13 @@ function ReceivedComments() {
         const href = c.resource ? `/resources/${c.resource.id}` : `/board/${c.post?.id}`
         const where = c.resource?.title ?? c.post?.title ?? ''
         return (
-          <li key={c.id}>
+          <li key={`${c.resource ? 'r' : 'p'}${c.id}`}>
             <Link href={href} className="block px-4 py-3 hover:bg-slate-50">
               <p className="text-xs text-slate-500">
-                <b className="text-slate-700">{c.author?.name ?? '알 수 없음'}</b> 선생님 · {c.resource ? '자료' : '글'} &lsquo;{where}&rsquo; ·{' '}
-                {timeAgo(c.created_at)}
+                <b className="text-slate-700">
+                  <AuthorName author={c.author} />
+                </b>{' '}
+                선생님 · {c.resource ? '자료' : '글'} &lsquo;{where}&rsquo; · {timeAgo(c.created_at)}
               </p>
               <p className="mt-1 line-clamp-2 text-sm text-slate-800">{c.body}</p>
             </Link>
@@ -109,15 +113,11 @@ function ReceivedComments() {
 
 function MyResources() {
   const uid = useAuth().session?.user.id
-  const [items, setItems] = useState<Resource[] | null>(null)
-  useEffect(() => {
-    supabase
-      .from('resources')
-      .select(RESOURCE_LIST_COLUMNS)
-      .eq('author_id', uid)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setItems((data as unknown as Resource[]) ?? []))
-  }, [uid])
+  const { data: items, failed, retry } = useQuery<Resource[]>(
+    () => supabase.from('resources').select(RESOURCE_LIST_COLUMNS).eq('author_id', uid).order('created_at', { ascending: false }),
+    [uid],
+  )
+  if (failed) return <LoadError onRetry={retry} />
   if (!items) return <Spinner />
   if (items.length === 0)
     return (
@@ -142,15 +142,11 @@ function MyResources() {
 
 function MyPosts() {
   const uid = useAuth().session?.user.id
-  const [items, setItems] = useState<Post[] | null>(null)
-  useEffect(() => {
-    supabase
-      .from('posts')
-      .select(POST_LIST_COLUMNS)
-      .eq('author_id', uid)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setItems((data as unknown as Post[]) ?? []))
-  }, [uid])
+  const { data: items, failed, retry } = useQuery<Post[]>(
+    () => supabase.from('posts').select(POST_LIST_COLUMNS).eq('author_id', uid).order('created_at', { ascending: false }),
+    [uid],
+  )
+  if (failed) return <LoadError onRetry={retry} />
   if (!items) return <Spinner />
   if (items.length === 0) return <Empty>아직 쓴 글이 없어요.</Empty>
   return (
@@ -170,14 +166,15 @@ type SavedRow = {
 }
 
 function Saved() {
-  const [items, setItems] = useState<SavedRow[] | null>(null)
-  useEffect(() => {
-    supabase
-      .from('bookmarks')
-      .select('id, created_at, resource:resources(id, title, resource_type, subject), post:posts(id, title, category)')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setItems((data as unknown as SavedRow[]) ?? []))
-  }, [])
+  const { data: items, failed, retry } = useQuery<SavedRow[]>(
+    () =>
+      supabase
+        .from('bookmarks')
+        .select('id, created_at, resource:resources(id, title, resource_type, subject), post:posts(id, title, category)')
+        .order('created_at', { ascending: false }),
+    [],
+  )
+  if (failed) return <LoadError onRetry={retry} />
   if (!items) return <Spinner />
   const rows = items.filter((b) => b.resource || b.post)
   if (rows.length === 0) return <Empty>자료나 글에서 ☆ 담아 두기를 누르면 여기에 모여요.</Empty>

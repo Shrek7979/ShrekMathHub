@@ -45,7 +45,9 @@ function CurriculumMap() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="page-title">교육과정 지도</h1>
-          <p className="mt-1 text-sm text-slate-500">과목과 단원을 누르면 그 자료만 모아 볼 수 있어요. 숫자는 올라온 자료 수예요.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            과목·단원을 누르면 그 자료만 모아 볼 수 있어요. 숫자는 올라온 자료 수예요. 회색 단원(자료 없음)을 누르면 자료를 요청할 수 있어요.
+          </p>
         </div>
         <div className="flex gap-2">
           {(['중', '고'] as const).map((l) => (
@@ -101,10 +103,15 @@ function SubjectCard({ level, subject, rows }: { level: SchoolLevel; subject: st
         <ul className="mt-3 flex flex-wrap gap-1.5">
           {units.map((u) => {
             const n = byUnit.get(u) ?? 0
+            // 자료가 없는 단원은 누르면 게시판에 '자료 요청' 질문을 쓰게 한다
+            const href = n
+              ? `${base}&unit=${encodeURIComponent(u)}`
+              : `/board/new?category=${encodeURIComponent('질문')}&title=${encodeURIComponent(`[${subject} · ${u}] 자료 요청`)}`
             return (
               <li key={u}>
                 <Link
-                  href={`${base}&unit=${encodeURIComponent(u)}`}
+                  href={href}
+                  title={n ? `${u} 자료 ${n}개 보기` : `${u} 자료가 아직 없어요 — 눌러서 요청하기`}
                   className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition ${
                     n ? 'border-brand-200 bg-brand-50 text-brand-800 hover:border-brand-400' : 'border-slate-200 text-slate-400 hover:text-slate-600'
                   }`}

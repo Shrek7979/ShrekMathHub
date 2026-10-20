@@ -60,7 +60,20 @@ export async function uploadFile(userId: string, file: File): Promise<FileInfo> 
     upsert: false,
   })
   if (error) throw error
-  return { path, name: file.name, size: file.size, type }
+  return { path, name: shortName(file.name), size: file.size, type }
+}
+
+/** 데이터베이스는 파일 이름을 200자까지 받는다 — 넘으면 확장자는 남기고 줄인다 */
+export function shortName(name: string, max = 200) {
+  if (name.length <= max) return name
+  const ext = extOf(name)
+  const tail = ext ? `.${ext}` : ''
+  return name.slice(0, max - tail.length - 1) + '…' + tail
+}
+
+/** 휴대폰·앱 안 브라우저처럼 Blob 내려받기가 잘 안 되는 곳 */
+function preferLinkDownload() {
+  return /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|; wv\)/i.test(navigator.userAgent) || window.matchMedia('(pointer: coarse)').matches
 }
 
 /** 자료의 파일을 저장소에서 지운다. 그 자료를 올린 사람 폴더의 파일만 (다른 선생님 파일을 지우지 않게). */
@@ -72,6 +85,13 @@ export async function removeFiles(paths: string[], ownerId?: string) {
 
 /** 원래 파일 이름(한글 포함) 그대로 내려받기 */
 export async function downloadFile(f: FileInfo) {
+  if (preferLinkDownload()) {
+    // 큰 파일을 메모리에 올리지 않고, 저장소가 파일 이름을 붙여 바로 내려 주는 1분짜리 주소로 이동
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(f.path, 60, { download: f.name })
+    if (error || !data) throw error ?? new Error('내려받기 주소를 만들지 못했어요.')
+    window.location.href = data.signedUrl
+    return
+  }
   const { data, error } = await supabase.storage.from(BUCKET).download(f.path)
   if (error) throw error
   const url = URL.createObjectURL(data)
