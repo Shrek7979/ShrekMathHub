@@ -87,7 +87,7 @@ function Importer() {
         if (e1 || !old) throw e1 ?? new Error(`바꿀 자료(#${it.replace_id})를 찾지 못했어요.`)
         const { data, error } = await supabase
           .from('resources')
-          .update({ files: uploaded })
+          .update(it.description ? { files: uploaded, description: it.description } : { files: uploaded })
           .eq('id', it.replace_id)
           .select('id')
           .maybeSingle()
