@@ -7,6 +7,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { CommentSection } from '@/components/CommentSection'
 import { FilePreview, canPreview } from '@/components/FilePreview'
 import { Gate } from '@/components/Gate'
+import { RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
 import { Markdown } from '@/components/Markdown'
 import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
@@ -211,6 +212,53 @@ function Detail() {
       </div>
 
       <CommentSection target={{ resourceId: r.id }} />
+
+      <RelatedResources current={r} />
     </article>
+  )
+}
+
+/** 같은 과목(같은 단원 먼저)의 다른 자료 */
+function RelatedResources({ current }: { current: Resource }) {
+  const [items, setItems] = useState<Resource[] | null>(null)
+
+  useEffect(() => {
+    supabase
+      .from('resources')
+      .select(RESOURCE_LIST_COLUMNS)
+      .eq('school_level', current.school_level)
+      .eq('subject', current.subject)
+      .neq('id', current.id)
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => {
+        const rows = (data as unknown as Resource[]) ?? []
+        const sameUnit = rows.filter((x) => current.unit && x.unit === current.unit)
+        const others = rows.filter((x) => !sameUnit.includes(x))
+        setItems([...sameUnit, ...others].slice(0, 4))
+      })
+  }, [current.id, current.school_level, current.subject, current.unit])
+
+  if (!items || items.length === 0) return null
+  return (
+    <section className="mt-10 border-t border-slate-200 pt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-bold text-slate-900">
+          {current.subject}
+          {current.unit && ` · ${current.unit}`} 다른 자료
+        </h2>
+        <Link
+          href={`/resources?level=${current.school_level}&subject=${encodeURIComponent(current.subject)}`}
+          className="text-sm text-slate-500 hover:text-brand-700"
+        >
+          더 보기 →
+        </Link>
+      </div>
+      <ul className="grid gap-2 md:grid-cols-2">
+        {items.map((x) => (
+          <ResourceItem key={x.id} r={x} />
+        ))}
+      </ul>
+    </section>
   )
 }

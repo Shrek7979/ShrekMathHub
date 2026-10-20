@@ -11,8 +11,9 @@ import { koError, timeAgo } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { MemberLevel, Post, ProfilePrivate, Resource } from '@/lib/types'
 
-type Tab = 'resources' | 'posts' | 'saved' | 'profile'
+type Tab = 'comments' | 'resources' | 'posts' | 'saved' | 'profile'
 const TABS: [Tab, string][] = [
+  ['comments', '받은 댓글'],
   ['resources', '내 자료'],
   ['posts', '내 글'],
   ['saved', '담아 둔 것'],
@@ -20,16 +21,16 @@ const TABS: [Tab, string][] = [
 ]
 
 export default function MePage() {
-  const [tab, setTab] = useState<Tab>('resources')
+  const [tab, setTab] = useState<Tab>('comments')
   return (
     <Gate>
       <h1 className="page-title">내 활동</h1>
-      <div className="mt-5 flex gap-1 border-b border-slate-200">
+      <div className="scrollbar-none mt-5 flex gap-1 overflow-x-auto border-b border-slate-200">
         {TABS.map(([t, label]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold ${
+            className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold ${
               tab === t ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -38,12 +39,71 @@ export default function MePage() {
         ))}
       </div>
       <div className="mt-5">
+        {tab === 'comments' && <ReceivedComments />}
         {tab === 'resources' && <MyResources />}
         {tab === 'posts' && <MyPosts />}
         {tab === 'saved' && <Saved />}
         {tab === 'profile' && <MyProfile />}
       </div>
     </Gate>
+  )
+}
+
+type Received = {
+  id: number
+  body: string
+  created_at: string
+  author: { name: string } | null
+  resource: { id: number; title: string } | null
+  post: { id: number; title: string } | null
+}
+
+/** 내 자료·내 글에 다른 선생님이 남긴 댓글 (최근 30개) */
+function ReceivedComments() {
+  const uid = useAuth().session?.user.id
+  const [items, setItems] = useState<Received[] | null>(null)
+
+  useEffect(() => {
+    if (!uid) return
+    async function load() {
+      const [r, p] = await Promise.all([
+        supabase.from('resources').select('id').eq('author_id', uid).order('created_at', { ascending: false }).limit(200),
+        supabase.from('posts').select('id').eq('author_id', uid).order('created_at', { ascending: false }).limit(200),
+      ])
+      const rids = (r.data ?? []).map((x) => x.id as number)
+      const pids = (p.data ?? []).map((x) => x.id as number)
+      const cols = 'id, body, created_at, author:profiles(name), resource:resources(id, title), post:posts(id, title)'
+      const [a, b] = await Promise.all([
+        rids.length ? supabase.from('comments').select(cols).in('resource_id', rids).neq('author_id', uid).order('created_at', { ascending: false }).limit(30) : null,
+        pids.length ? supabase.from('comments').select(cols).in('post_id', pids).neq('author_id', uid).order('created_at', { ascending: false }).limit(30) : null,
+      ])
+      const all = [...((a?.data as unknown as Received[]) ?? []), ...((b?.data as unknown as Received[]) ?? [])]
+      all.sort((x, y) => y.created_at.localeCompare(x.created_at))
+      setItems(all.slice(0, 30))
+    }
+    load()
+  }, [uid])
+
+  if (!items) return <Spinner />
+  if (items.length === 0) return <Empty>아직 받은 댓글이 없어요. 자료를 나누면 선생님들의 이야기가 여기에 모여요.</Empty>
+  return (
+    <ul className="card divide-y divide-slate-100 overflow-hidden">
+      {items.map((c) => {
+        const href = c.resource ? `/resources/${c.resource.id}` : `/board/${c.post?.id}`
+        const where = c.resource?.title ?? c.post?.title ?? ''
+        return (
+          <li key={c.id}>
+            <Link href={href} className="block px-4 py-3 hover:bg-slate-50">
+              <p className="text-xs text-slate-500">
+                <b className="text-slate-700">{c.author?.name ?? '알 수 없음'}</b> 선생님 · {c.resource ? '자료' : '글'} &lsquo;{where}&rsquo; ·{' '}
+                {timeAgo(c.created_at)}
+              </p>
+              <p className="mt-1 line-clamp-2 text-sm text-slate-800">{c.body}</p>
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
