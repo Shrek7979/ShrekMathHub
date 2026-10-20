@@ -6,3 +6,7 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+.env*
+
+# 내 PC 자료 가져오기 목록 (개인 경로가 들어 있음)
+.import/
