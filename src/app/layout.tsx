@@ -8,7 +8,13 @@ import { NewsPanel } from '@/components/NewsPanel'
 import { SetupNotice } from '@/components/SetupNotice'
 import { isConfigured } from '@/lib/supabase'
 
+// 링크 미리보기 그림 등의 주소 기준: 직접 정한 주소 → Vercel 이 알려 주는 주소 → 내 PC
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: { default: 'Shrek Math Hub', template: '%s · Shrek Math Hub' },
   description: '중·고등학교 수학 선생님들이 수업 자료와 고민을 나누는 곳',
   openGraph: {
