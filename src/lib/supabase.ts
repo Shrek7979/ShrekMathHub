@@ -1,7 +1,14 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-const key = process.env.NEXT_PUBLIC_SUPABASE_KEY ?? ''
+// Shrek Math Hub 의 Supabase 프로젝트 (서울).
+// 둘 다 '공개용' 값이라 방문자 브라우저에 그대로 보이는 것이 정상이다 — 보안은 데이터베이스 규칙(RLS)이 맡는다.
+// 다른 프로젝트에 연결하려면 .env.local 이나 Vercel 환경 변수(NEXT_PUBLIC_SUPABASE_URL / _KEY)로 덮어쓴다.
+// ※ secret / service_role 키는 절대 여기에 두지 않는다.
+const DEFAULT_URL = 'https://pvnqznfnppcszxfbmayx.supabase.co'
+const DEFAULT_KEY = 'sb_publishable_cga4xMmG_fui8eHZhUbAwA_GHHxKL4j'
+
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_URL
+const key = process.env.NEXT_PUBLIC_SUPABASE_KEY || DEFAULT_KEY
 
 export const SUPABASE_URL = url
 export const SUPABASE_KEY = key
