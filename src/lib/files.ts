@@ -33,8 +33,10 @@ export const canPreview = (f: FileInfo) => PREVIEWABLE.has(extOf(f.name))
 export async function uploadFile(userId: string, file: File): Promise<FileInfo> {
   const ext = extOf(file.name)
   const path = `${userId}/${crypto.randomUUID()}${ext ? `.${ext}` : ''}`
+  const type = file.type || 'application/octet-stream'
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type || 'application/octet-stream',
+    // 미리보기에서 한글이 깨지지 않도록 텍스트 파일은 UTF-8 로 표시
+    contentType: type.startsWith('text/') && !/charset/i.test(type) ? `${type};charset=utf-8` : type,
     upsert: false,
   })
   if (error) throw error

@@ -15,7 +15,8 @@ export function Reactions({ target }: { target: Target }) {
   const [likeCount, setLikeCount] = useState(0)
   const [liked, setLiked] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [busy, setBusy] = useState(false)
+  // 좋아요·담아 두기를 연달아 눌러도 서로 막지 않게 따로 둔다
+  const [busy, setBusy] = useState({ likes: false, bookmarks: false })
 
   useEffect(() => {
     if (!uid) return
@@ -31,12 +32,12 @@ export function Reactions({ target }: { target: Target }) {
   }, [uid, key, id])
 
   async function toggle(table: 'likes' | 'bookmarks', on: boolean) {
-    if (!uid || busy) return
-    setBusy(true)
+    if (!uid || busy[table]) return
+    setBusy((b) => ({ ...b, [table]: true }))
     const { error } = on
       ? await supabase.from(table).delete().eq(key, id).eq('user_id', uid)
       : await supabase.from(table).insert(cols)
-    setBusy(false)
+    setBusy((b) => ({ ...b, [table]: false }))
     // 이미 눌러 둔 상태(중복)라면 화면만 맞춘다
     if (error && error.code !== '23505') return alert(koError(error))
     if (table === 'likes') {
@@ -51,7 +52,7 @@ export function Reactions({ target }: { target: Target }) {
     <div className="flex items-center gap-2">
       <button
         onClick={() => toggle('likes', liked)}
-        disabled={busy}
+        disabled={busy.likes}
         aria-pressed={liked}
         className={`btn btn-sm border ${
           liked ? 'border-rose-200 bg-rose-50 text-rose-600' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
@@ -61,7 +62,7 @@ export function Reactions({ target }: { target: Target }) {
       </button>
       <button
         onClick={() => toggle('bookmarks', saved)}
-        disabled={busy}
+        disabled={busy.bookmarks}
         aria-pressed={saved}
         className={`btn btn-sm border ${
           saved ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'

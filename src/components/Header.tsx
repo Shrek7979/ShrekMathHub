@@ -21,7 +21,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 lg:h-14 lg:py-0">
         <Logo />
         {isApproved && (
           <nav className="order-3 -mx-1 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">

@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/components/AuthProvider'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
+import { NewsPanel } from '@/components/NewsPanel'
 import { SetupNotice } from '@/components/SetupNotice'
 import { isConfigured } from '@/lib/supabase'
 
@@ -31,11 +32,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <AuthProvider>
           <Header />
-          <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
-            {!isConfigured && <SetupNotice />}
-            {children}
-          </main>
-          <Footer />
+          {/* 왼쪽: 사이트 화면, 오른쪽: Shrek Edu Insight 수학 뉴스 (늘 보임) */}
+          <div className="flex w-full flex-1">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
+                {!isConfigured && <SetupNotice />}
+                {children}
+              </main>
+              <Footer />
+            </div>
+            <NewsPanel />
+          </div>
         </AuthProvider>
       </body>
     </html>
