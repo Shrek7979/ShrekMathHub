@@ -23,10 +23,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 lg:h-14 lg:py-0">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:gap-x-6 lg:h-14 lg:py-0">
         <Logo />
         {isApproved && (
-          <nav className="order-3 -mx-1 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
+          <nav className="scrollbar-none order-3 -mx-1 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
             {nav.map((n) => {
               const on = pathname.startsWith(n.href)
               return (
@@ -50,8 +50,17 @@ export function Header() {
           {loading ? null : session ? (
             <>
               {isApproved && (
-                <Link href="/me" className="btn-ghost btn-sm">
-                  <span className="max-w-[8rem] truncate">{profile?.name ?? '내 정보'}</span> 선생님
+                <Link href="/search" className="btn-ghost btn-sm" aria-label="찾기" title="자료·글 찾기">
+                  🔍<span className="hidden xl:inline">찾기</span>
+                </Link>
+              )}
+              {isApproved && (
+                <Link href="/me" className="btn-ghost btn-sm" title="내 활동">
+                  {/* 좁은 화면에서는 이름 첫 글자만 */}
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700 sm:hidden">
+                    {profile?.name.slice(0, 1) ?? '나'}
+                  </span>
+                  <span className="hidden max-w-[8rem] truncate sm:inline">{profile?.name ?? '내 정보'} 선생님</span>
                 </Link>
               )}
               <button

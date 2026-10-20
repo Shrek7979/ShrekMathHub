@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
@@ -126,6 +127,8 @@ function Dashboard() {
         </div>
       </div>
 
+      <HubSearch />
+
       {data?.notice && (
         <Link
           href={`/board/${data.notice.id}`}
@@ -231,6 +234,32 @@ function Dashboard() {
         </>
       )}
     </div>
+  )
+}
+
+/** 첫 화면의 큰 찾기 칸 → /search */
+function HubSearch() {
+  const router = useRouter()
+  const [q, setQ] = useState('')
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`)
+      }}
+      className="mt-5 flex gap-2"
+      role="search"
+    >
+      <input
+        className="input py-3 text-base"
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="무엇을 찾으세요? 예) 이차함수 활동지, 수행평가 루브릭"
+        aria-label="자료·글 찾기"
+      />
+      <button className="btn-primary shrink-0 px-5">찾기</button>
+    </form>
   )
 }
 

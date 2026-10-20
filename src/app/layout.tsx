@@ -35,7 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* 왼쪽: 사이트 화면, 오른쪽: Shrek Edu Insight 수학 뉴스 (늘 보임) */}
           <div className="flex w-full flex-1">
             <div className="flex min-w-0 flex-1 flex-col">
-              <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
+              {/* 좁은 화면에서는 오른쪽 아래 "수학 뉴스" 버튼에 가리지 않게 아래 여백을 넉넉히 */}
+              <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 sm:pt-8 lg:pb-8">
                 {!isConfigured && <SetupNotice />}
                 {children}
               </main>
