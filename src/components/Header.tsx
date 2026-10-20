@@ -46,7 +46,7 @@ export function Header() {
             })}
           </nav>
         )}
-        <div className="ml-auto flex items-center gap-2 text-sm">
+        <div className="ml-auto flex items-center gap-1 text-sm sm:gap-2">
           {loading ? null : session ? (
             <>
               {isApproved && (

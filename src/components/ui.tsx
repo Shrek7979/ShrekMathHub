@@ -42,10 +42,10 @@ export function ErrorBox({ children }: { children: React.ReactNode }) {
 export function Logo({ className = '' }: { className?: string }) {
   return (
     <Link href="/" className={`flex items-center gap-2 font-bold text-slate-900 ${className}`}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-lg leading-none text-white">
+      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-base leading-none text-white sm:h-8 sm:w-8 sm:text-lg">
         Σ
       </span>
-      <span className="text-lg tracking-tight">
+      <span className="whitespace-nowrap text-base tracking-tight sm:text-lg">
         Shrek <span className="text-brand-600">Math</span> Hub
       </span>
     </Link>
