@@ -13,16 +13,23 @@ import { useAuth } from './AuthProvider'
 import { MarkdownEditor } from './MarkdownEditor'
 import { DraftNotice, ErrorBox } from './ui'
 
-/** 자료 올리기 / 고치기 */
-export function ResourceForm({ initial }: { initial?: Resource }) {
+/** 자료 올리기 / 고치기. preset: 학습맵 등에서 '이 단원 자료 올리기'로 왔을 때 미리 고른 과목·단원 */
+export function ResourceForm({
+  initial,
+  preset,
+}: {
+  initial?: Resource
+  preset?: { level: SchoolLevel; subject: string; unit: string }
+}) {
   const { session, profile } = useAuth()
   const router = useRouter()
-  const defaultLevel: SchoolLevel = initial?.school_level ?? (profile?.school_level === '중' ? '중' : '고')
+  const defaultLevel: SchoolLevel =
+    initial?.school_level ?? preset?.level ?? (profile?.school_level === '중' ? '중' : '고')
 
   const [title, setTitle] = useState(initial?.title ?? '')
   const [level, setLevel] = useState<SchoolLevel>(defaultLevel)
-  const [subject, setSubject] = useState(initial?.subject ?? subjectsOf(defaultLevel)[0])
-  const [unit, setUnit] = useState(initial?.unit ?? '')
+  const [subject, setSubject] = useState(initial?.subject ?? preset?.subject ?? subjectsOf(defaultLevel)[0])
+  const [unit, setUnit] = useState(initial?.unit ?? preset?.unit ?? '')
   const [type, setType] = useState(initial?.resource_type ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [link, setLink] = useState(initial?.link_url ?? '')

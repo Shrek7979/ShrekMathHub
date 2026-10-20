@@ -11,7 +11,8 @@ import { useEffect, useRef, useState } from 'react'
 export function useDraft<T extends object>(key: string, value: T, restore: (v: T) => void, enabled = true) {
   const [restored, setRestored] = useState(false)
   const dirty = useRef(false)
-  const first = useRef(true)
+  // 처음 연 모습(또는 불러온 모습)과 달라졌을 때만 '쓰는 중'으로 본다 (미리 채운 과목·단원은 쓰는 중이 아님)
+  const baseline = useRef<string | null>(null)
   const justRestored = useRef(false)
 
   // 처음 한 번: 저장된 것이 있으면 불러오기
@@ -32,11 +33,12 @@ export function useDraft<T extends object>(key: string, value: T, restore: (v: T
   const json = JSON.stringify(value)
   useEffect(() => {
     if (!enabled) return
-    if (first.current || justRestored.current) {
-      first.current = false
+    if (baseline.current === null || justRestored.current) {
+      baseline.current = json
       justRestored.current = false
       return
     }
+    if (json === baseline.current) return
     dirty.current = true
     const t = setTimeout(() => {
       try {
