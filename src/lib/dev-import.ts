@@ -12,6 +12,8 @@ export type ImportItem = {
   description?: string
   link_url?: string
   featured?: boolean
+  /** 이미 올린 자료의 파일만 바꿀 때 그 자료 번호 (제목·설명 등은 그대로 둠) */
+  replace_id?: number
   /** 내 PC 의 파일 경로들 (사이트에 보일 이름을 바꾸려면 { path, name }) */
   files: (string | { path: string; name: string })[]
 }

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
 import { Empty, Spinner } from '@/components/ui'
-import { checkFile, uploadFile } from '@/lib/files'
+import { checkFile, removeFiles, uploadFile } from '@/lib/files'
 import { fileSize, koError } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { FileInfo } from '@/lib/types'
@@ -20,11 +20,15 @@ type Item = {
   description: string
   link_url: string | null
   featured: boolean
+  replace_id: number | null
   files: { name: string; size: number; exists: boolean }[]
 }
 type State = { status: 'wait' | 'busy' | 'done' | 'skip' | 'fail'; note?: string; id?: number }
 
 const DONE_KEY = 'smh-import-done'
+
+/** 다시 올리지 않도록 기억하는 이름 (파일 교체는 따로 기억) */
+const doneKey = (it: Item) => (it.replace_id ? `${it.title} (파일 교체 #${it.replace_id})` : it.title)
 
 /** 내 PC(.import/manifest.json)의 자료를 관리자 계정으로 한꺼번에 올린다 — 개발 모드 전용 */
 export default function ImportPage() {
@@ -51,7 +55,7 @@ function Importer() {
         try {
           const done = JSON.parse(localStorage.getItem(DONE_KEY) ?? '{}') as Record<string, number>
           const s: Record<number, State> = {}
-          for (const it of d.items as Item[]) if (done[it.title]) s[it.index] = { status: 'done', id: done[it.title] }
+          for (const it of d.items as Item[]) if (done[doneKey(it)]) s[it.index] = { status: 'done', id: done[doneKey(it)] }
           setState(s)
         } catch {}
       })
@@ -72,30 +76,51 @@ function Importer() {
         if (problem) throw new Error(problem)
         uploaded.push(await uploadFile(uid, file))
       }
-      const { data, error } = await supabase
-        .from('resources')
-        .insert({
-          title: it.title,
-          school_level: it.school_level,
-          subject: it.subject,
-          unit: it.unit,
-          resource_type: it.resource_type,
-          description: it.description,
-          link_url: it.link_url,
-          files: uploaded,
-        })
-        .select('id')
-        .maybeSingle()
-      if (error || !data) throw error ?? new Error('저장하지 못했어요.')
-      if (it.featured) await supabase.rpc('admin_feature_resource', { rid: data.id, on_off: true })
+      let id: number
+      if (it.replace_id) {
+        // 이미 올린 자료: 파일만 새것으로 바꾸고, 예전 파일은 저장소에서 지운다
+        const { data: old, error: e1 } = await supabase
+          .from('resources')
+          .select('files')
+          .eq('id', it.replace_id)
+          .maybeSingle()
+        if (e1 || !old) throw e1 ?? new Error(`바꿀 자료(#${it.replace_id})를 찾지 못했어요.`)
+        const { data, error } = await supabase
+          .from('resources')
+          .update({ files: uploaded })
+          .eq('id', it.replace_id)
+          .select('id')
+          .maybeSingle()
+        if (error || !data) throw error ?? new Error('파일을 바꾸지 못했어요.')
+        await removeFiles((old.files as FileInfo[]).map((f) => f.path), uid)
+        id = data.id
+      } else {
+        const { data, error } = await supabase
+          .from('resources')
+          .insert({
+            title: it.title,
+            school_level: it.school_level,
+            subject: it.subject,
+            unit: it.unit,
+            resource_type: it.resource_type,
+            description: it.description,
+            link_url: it.link_url,
+            files: uploaded,
+          })
+          .select('id')
+          .maybeSingle()
+        if (error || !data) throw error ?? new Error('저장하지 못했어요.')
+        if (it.featured) await supabase.rpc('admin_feature_resource', { rid: data.id, on_off: true })
+        id = data.id
+      }
       try {
         const done = JSON.parse(localStorage.getItem(DONE_KEY) ?? '{}')
-        done[it.title] = data.id
+        done[doneKey(it)] = id
         localStorage.setItem(DONE_KEY, JSON.stringify(done))
       } catch {}
-      set({ status: 'done', id: data.id })
+      set({ status: 'done', id })
     } catch (e) {
-      if (uploaded.length) await supabase.storage.from('resources').remove(uploaded.map((u) => u.path))
+      if (uploaded.length) await removeFiles(uploaded.map((u) => u.path), uid)
       set({ status: 'fail', note: koError(e) })
     }
   }
@@ -142,6 +167,7 @@ function Importer() {
                 {it.unit && ` · ${it.unit}`}
               </span>
               {it.featured && <span className="badge bg-amber-100 text-amber-800">⭐ 추천</span>}
+              {it.replace_id && <span className="badge bg-sky-100 text-sky-800">파일 교체 #{it.replace_id}</span>}
               <span className="min-w-0 flex-1 font-medium text-slate-900">{it.title}</span>
               <span className="text-xs text-slate-500">
                 {it.files.map((f) => `${f.name}${f.exists ? '' : ' (없음)'}`).join(', ')}

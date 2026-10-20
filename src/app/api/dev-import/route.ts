@@ -17,6 +17,7 @@ export async function GET(req: Request) {
       description: it.description ?? '',
       link_url: it.link_url ?? null,
       featured: !!it.featured,
+      replace_id: it.replace_id ?? null,
       files: await Promise.all(it.files.map(fileInfo)),
     })),
   )
