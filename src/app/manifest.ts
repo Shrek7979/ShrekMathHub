@@ -12,10 +12,10 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#527b20',
     lang: 'ko',
     icons: [
-      { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },
-      { src: '/pwa-icon/192', sizes: '192x192', type: 'image/png' },
-      { src: '/pwa-icon/512', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/pwa-icon/512', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      // 안드로이드가 원·둥근 모양으로 잘라도 돼지가 남도록 그림을 안쪽으로 줄인 것
+      { src: '/icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   }
 }

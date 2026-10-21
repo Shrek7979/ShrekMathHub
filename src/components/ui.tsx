@@ -55,7 +55,7 @@ export function Logo({ className = '' }: { className?: string }) {
   return (
     <Link href="/" className={`flex items-center gap-2 font-bold text-slate-900 ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/icon.svg" alt="" width={32} height={32} className="h-7 w-7 sm:h-8 sm:w-8" />
+      <img src="/icons/icon-192.png" alt="" width={32} height={32} className="h-7 w-7 sm:h-8 sm:w-8" />
       <span className="whitespace-nowrap text-base tracking-tight sm:text-lg">
         Shrek <span className="text-brand-600">Math</span> Hub
       </span>
