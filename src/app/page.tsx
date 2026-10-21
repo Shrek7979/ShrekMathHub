@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+import { DailyProblem } from '@/components/DailyProblem'
 import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
 import { SiteBanners } from '@/components/SiteBanners'
@@ -31,12 +32,12 @@ function Landing() {
     ['🗺️', '교육과정 지도', '2022 개정 교육과정 과목·단원별로 모인 자료를 한눈에 봐요.'],
     ['💬', '질문·나눔 게시판', '"이 단원 어떻게 가르치세요?" 수업 고민을 함께 풀어요.'],
     ['∑', '수식 그대로', '$x^2$ 처럼 쓰면 글과 댓글에서 수식이 바로 보여요.'],
-    ['📰', '오늘의 수학 뉴스', '화면 한쪽에서 Shrek Edu Insight 수학 뉴스를 늘 함께 봐요.'],
+    ['🧩', '오늘의 수학 문제', '대문에서 날마다 한 문제. 답을 맞혀 보고, 풀이와 수업 활용 아이디어를 나눠요.'],
     ['🔒', '선생님만', '관리자가 승인한 수학 선생님만 들어와요. 평가 자료도 안심하고 나눠요.'],
   ]
   return (
-    <div className="py-6 sm:py-10">
-      <section className="text-center">
+    <div className="py-4 sm:py-8">
+      <section className="graph-paper -mx-4 px-4 py-8 text-center sm:mx-0 sm:rounded-2xl sm:py-10">
         <p className="badge-brand">중·고등학교 수학 선생님의 허브</p>
         <h1 className="mx-auto mt-4 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
           수학 선생님이 만든 자료를,
@@ -55,7 +56,16 @@ function Landing() {
           </Link>
         </div>
       </section>
-      <section className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+      {/* 대문의 특징: 날마다 한 문제, 답을 생각해 보는 코너 */}
+      <section className="mx-auto mt-8 max-w-3xl">
+        <DailyProblem />
+        <p className="mt-2 text-center text-xs text-slate-500">
+          날마다 새 문제가 올라와요. 수업 시작 5분, 학생들과 함께 풀어 보세요.
+        </p>
+      </section>
+
+      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {features.map(([icon, title, desc]) => (
           <div key={title} className="card p-5">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-xl text-brand-700">{icon}</div>
@@ -169,6 +179,10 @@ function Dashboard() {
           <span className="shrink-0 text-xs text-slate-500">{timeAgo(data.notice.created_at)}</span>
         </Link>
       )}
+
+      <div className="mt-5">
+        <DailyProblem />
+      </div>
 
       <div className="mt-5">
         <SiteBanners />

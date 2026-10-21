@@ -60,6 +60,15 @@
   }
 }
 
+/* 대문 머리 부분의 모눈종이 느낌 배경 */
+.graph-paper {
+  background-color: #fbfdf8;
+  background-image:
+    linear-gradient(rgba(82, 123, 32, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(82, 123, 32, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
 /* 가로로 넘기는 메뉴의 스크롤 막대 숨기기 */
 .scrollbar-none {
   scrollbar-width: none;
