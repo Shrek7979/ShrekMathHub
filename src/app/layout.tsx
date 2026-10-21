@@ -5,6 +5,7 @@ import { AuthProvider } from '@/components/AuthProvider'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { NewsPanel } from '@/components/NewsPanel'
+import { ProblemPanel } from '@/components/ProblemPanel'
 import { SetupNotice } from '@/components/SetupNotice'
 import { isConfigured } from '@/lib/supabase'
 
@@ -44,8 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <AuthProvider>
           <Header />
-          {/* 왼쪽: 사이트 화면, 오른쪽: Shrek Edu Insight 수학 뉴스 (늘 보임) */}
+          {/* 왼쪽: Shrek Edu Insight 수학 뉴스 (늘 보임), 가운데: 사이트 화면, 오른쪽: 오늘의 수학 문제 (아주 넓은 화면) */}
           <div className="flex w-full flex-1">
+            <NewsPanel />
             <div className="flex min-w-0 flex-1 flex-col">
               {/* 좁은 화면에서는 오른쪽 아래 "수학 뉴스" 버튼에 가리지 않게 아래 여백을 넉넉히 */}
               <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 sm:pt-8 lg:pb-8">
@@ -54,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </main>
               <Footer />
             </div>
-            <NewsPanel />
+            <ProblemPanel />
           </div>
         </AuthProvider>
       </body>

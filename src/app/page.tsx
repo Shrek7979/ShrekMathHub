@@ -57,8 +57,8 @@ function Landing() {
         </div>
       </section>
 
-      {/* 대문의 특징: 날마다 한 문제, 답을 생각해 보는 코너 */}
-      <section className="mx-auto mt-8 max-w-3xl">
+      {/* 대문의 특징: 날마다 한 문제, 답을 생각해 보는 코너 (아주 넓은 화면에서는 오른쪽 패널에) */}
+      <section className="mx-auto mt-8 max-w-3xl 2xl:hidden">
         <DailyProblem />
         <p className="mt-2 text-center text-xs text-slate-500">
           날마다 새 문제가 올라와요. 수업 시작 5분, 학생들과 함께 풀어 보세요.
@@ -180,7 +180,7 @@ function Dashboard() {
         </Link>
       )}
 
-      <div className="mt-5">
+      <div className="mt-5 2xl:hidden">
         <DailyProblem />
       </div>
 

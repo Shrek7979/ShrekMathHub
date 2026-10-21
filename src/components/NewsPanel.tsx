@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { SITE } from '@/lib/site'
+import { useMediaQuery } from '@/lib/useMediaQuery'
 
 const NEWS_URL = SITE.newsUrl
 const STORAGE_KEY = 'smh-news-panel'
 
 /**
  * 화면 한쪽에 늘 떠 있는 Shrek Edu Insight(수학 뉴스).
- * 넓은 화면: 오른쪽에 붙어 있는 패널(접기 가능). 좁은 화면: 오른쪽 아래 버튼 → 아래에서 올라오는 창.
+ * 넓은 화면: 왼쪽에 붙어 있는 패널(접기 가능). 좁은 화면: 오른쪽 아래 버튼 → 아래에서 올라오는 창.
  * 레이아웃에 들어 있어서 화면을 옮겨도 다시 불러오지 않는다.
  */
 export function NewsPanel() {
@@ -43,14 +44,14 @@ export function NewsPanel() {
       return (
         <button
           onClick={() => remember(true)}
-          className="fixed right-0 top-1/2 z-30 -translate-y-1/2 rounded-l-xl border border-r-0 border-slate-200 bg-white px-2 py-4 text-sm font-semibold text-slate-700 shadow-md hover:bg-slate-50 [writing-mode:vertical-rl]"
+          className="fixed left-0 top-1/2 z-30 -translate-y-1/2 rounded-r-xl border border-l-0 border-slate-200 bg-white px-2 py-4 text-sm font-semibold text-slate-700 shadow-md hover:bg-slate-50 [writing-mode:vertical-rl]"
         >
           📰 수학 뉴스 펼치기
         </button>
       )
     return (
-      <aside className="sticky top-[57px] flex h-[calc(100vh-57px)] w-[340px] shrink-0 flex-col self-start border-l border-slate-200 bg-white xl:w-[400px] 2xl:w-[440px]">
-        <PanelHeader onClose={() => remember(false)} closeLabel="접기 ›" />
+      <aside className="sticky top-[57px] flex h-[calc(100vh-57px)] w-[340px] shrink-0 flex-col self-start border-r border-slate-200 bg-white xl:w-[400px] 2xl:w-[420px]">
+        <PanelHeader onClose={() => remember(false)} closeLabel="‹ 접기" />
         <NewsFrame />
       </aside>
     )
@@ -111,15 +112,3 @@ function NewsFrame() {
   )
 }
 
-/** 처음 그릴 때는 null (서버에서는 화면 크기를 모름) */
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState<boolean | null>(null)
-  useEffect(() => {
-    const m = window.matchMedia(query)
-    setMatches(m.matches)
-    const onChange = () => setMatches(m.matches)
-    m.addEventListener('change', onChange)
-    return () => m.removeEventListener('change', onChange)
-  }, [query])
-  return matches
-}
