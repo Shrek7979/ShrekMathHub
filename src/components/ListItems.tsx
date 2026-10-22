@@ -19,10 +19,34 @@ export function AuthorName({ author }: { author?: { name: string; role?: string 
   )
 }
 
-export function ResourceItem({ r }: { r: Resource }) {
+/**
+ * 자료 한 건. compact 면 한 줄 행(첫 화면 목록용, card divide-y 안에 넣어 쓴다),
+ * 아니면 분류·제목·작성자 세 줄 카드(자료실 목록용).
+ */
+export function ResourceItem({ r, compact = false }: { r: Resource; compact?: boolean }) {
   // 파일 정보가 이상해도 목록 전체가 멈추지 않게
   const files = (r.files ?? []).filter((f) => f && typeof f.name === 'string')
   const exts = Array.from(new Set(files.map((f) => extOf(f.name).toUpperCase()).filter(Boolean)))
+  if (compact)
+    return (
+      <li>
+        <Link href={`/resources/${r.id}`} className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-slate-50">
+          <span className="badge-brand shrink-0">{r.resource_type}</span>
+          <span className="min-w-0 flex-1 truncate font-medium text-slate-900">
+            {r.featured && <span className="mr-1 text-amber-500" title="허브 추천">⭐</span>}
+            {r.title}
+          </span>
+          <span className="hidden shrink-0 text-xs text-slate-500 md:inline">
+            {r.subject}
+            {r.unit && ` · ${r.unit}`}
+          </span>
+          <span className="hidden w-20 shrink-0 truncate text-xs text-slate-500 sm:inline">
+            <AuthorName author={r.author} />
+          </span>
+          <span className="w-14 shrink-0 text-right text-xs text-slate-500">{timeAgo(r.created_at)}</span>
+        </Link>
+      </li>
+    )
   return (
     <li>
       <Link href={`/resources/${r.id}`} className="card block px-4 py-3 transition hover:border-brand-300 hover:shadow-sm">

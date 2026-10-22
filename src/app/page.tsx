@@ -192,52 +192,57 @@ function Dashboard() {
         <Spinner />
       ) : (
         <>
-          {data.featured.length > 0 && (
-            <section className="mt-8">
-              <SectionHead title="⭐ 허브 추천 자료" href="/resources?featured=1" />
-              <ul className="grid gap-2 md:grid-cols-2">
-                {data.featured.map((r) => (
-                  <ResourceItem key={r.id} r={r} />
-                ))}
-              </ul>
-            </section>
-          )}
-
-          <section className="mt-8">
-            <SectionHead title={`🗺️ ${level === '중' ? '중학교' : '고등학교'} 과목별 자료`} href="/curriculum" more="교육과정 지도 →" />
-            <div className="flex flex-wrap gap-2">
-              {SUBJECTS[level]
-                .flatMap((g) => g.items)
-                .map((s) => (
-                  <Link key={s} href={`/resources?level=${level}&subject=${encodeURIComponent(s)}`} className="chip">
-                    {s}
-                  </Link>
-                ))}
-            </div>
-          </section>
-
-          <div className="mt-8 grid gap-8 lg:grid-cols-5">
-            <section className="lg:col-span-3">
-              <SectionHead
-                title="새로 올라온 자료"
-                href="/resources"
-                badge={data.newSince ? `지난 방문 이후 ${data.newSince}개` : undefined}
-              />
-              {data.recent.length === 0 ? (
-                <FirstOne href="/resources/new" text={isAdmin ? '첫 자료를 올려 허브를 열어 주세요!' : '아직 자료가 없어요. 첫 자료를 올려 주세요!'} />
-              ) : (
-                <ul className="space-y-2">
-                  {data.recent.map((r) => (
-                    <ResourceItem key={r.id} r={r} />
-                  ))}
-                </ul>
+          <div className="mt-10 grid gap-8 lg:grid-cols-5">
+            <div className="space-y-8 lg:col-span-3">
+              {data.featured.length > 0 && (
+                <section>
+                  <SectionHead title="허브 추천 자료" href="/resources?featured=1" />
+                  <ul className="card divide-y divide-slate-100 overflow-hidden">
+                    {data.featured.map((r) => (
+                      <ResourceItem key={r.id} r={r} compact />
+                    ))}
+                  </ul>
+                </section>
               )}
-            </section>
+
+              <section>
+                <SectionHead
+                  title="새로 올라온 자료"
+                  href="/resources"
+                  badge={data.newSince ? `지난 방문 이후 ${data.newSince}개` : undefined}
+                />
+                {data.recent.length === 0 ? (
+                  <FirstOne href="/resources/new" text={isAdmin ? '첫 자료를 올려 허브를 열어 주세요!' : '아직 자료가 없어요. 첫 자료를 올려 주세요!'} />
+                ) : (
+                  <ul className="card divide-y divide-slate-100 overflow-hidden">
+                    {data.recent.map((r) => (
+                      <ResourceItem key={r.id} r={r} compact />
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section>
+                <SectionHead title={`${level === '중' ? '중학교' : '고등학교'} 과목별 자료`} href="/curriculum" more="교육과정 지도 →" />
+                <div className="card divide-y divide-slate-100 px-4">
+                  {SUBJECTS[level].map((g) => (
+                    <div key={g.group} className="flex flex-wrap items-center gap-1.5 py-2.5">
+                      <span className="w-16 shrink-0 text-xs font-semibold text-slate-400">{g.group}</span>
+                      {g.items.map((s) => (
+                        <Link key={s} href={`/resources?level=${level}&subject=${encodeURIComponent(s)}`} className="chip py-0.5 text-xs">
+                          {s}
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
 
             <div className="space-y-8 lg:col-span-2">
               {data.popular.length > 0 && (
                 <section>
-                  <SectionHead title="📈 많이 받은 자료" href="/resources?sort=popular" />
+                  <SectionHead title="많이 받은 자료" href="/resources?sort=popular" />
                   <ol className="card divide-y divide-slate-100 overflow-hidden text-sm">
                     {data.popular.map((r, i) => (
                       <li key={r.id}>
@@ -253,7 +258,7 @@ function Dashboard() {
               )}
               {data.questions.length > 0 && (
                 <section>
-                  <SectionHead title="🙋 답을 기다리는 질문" href={`/board?category=${encodeURIComponent(QUESTION)}`} />
+                  <SectionHead title="답을 기다리는 질문" href={`/board?category=${encodeURIComponent(QUESTION)}`} />
                   <ul className="card divide-y divide-slate-100 overflow-hidden">
                     {data.questions.map((p) => (
                       <PostItem key={p.id} p={p} />
@@ -277,12 +282,12 @@ function Dashboard() {
           </div>
 
           <section className="mt-10">
-            <SectionHead title="🌐 함께 보면 좋은 사이트" href="/links" more="링크 모음 →" />
+            <SectionHead title="함께 보면 좋은 사이트" href="/links" more="링크 모음 →" />
             <SiteBanners compact />
           </section>
 
           <section className="mt-10">
-            <SectionHead title="🔗 수업 준비 바로가기" href="/links" more="링크 모음 →" />
+            <SectionHead title="수업 준비 바로가기" href="/links" more="링크 모음 →" />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {LINK_GROUPS.flatMap((g) => g.links)
                 .slice(0, 8)
