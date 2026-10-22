@@ -150,6 +150,8 @@ create table if not exists public.resources (
   files          jsonb not null default '[]'::jsonb check (jsonb_typeof(files) = 'array'),
   download_count integer not null default 0,
   featured       boolean not null default false,  -- 관리자 추천 자료
+  source_kind    text not null default 'own',     -- own 직접 만듦 / adapted 다른 자료를 고침 / linked 공개 자료 링크
+  source_note    text,                            -- 출처 설명 (200자, adapted 면 필수)
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
@@ -172,6 +174,13 @@ create index if not exists posts_author_idx on public.posts (author_id);
 
 -- 예전에 만든 데이터베이스에도 새 칸을 더한다 (이미 있으면 건너뜀)
 alter table public.resources add column if not exists featured boolean not null default false;
+alter table public.resources add column if not exists source_kind text not null default 'own';
+alter table public.resources add column if not exists source_note text;
+alter table public.resources drop constraint if exists resources_source_valid;
+alter table public.resources add constraint resources_source_valid
+  check (source_kind in ('own', 'adapted', 'linked')
+     and (source_note is null or char_length(source_note) <= 200)
+     and (source_kind <> 'adapted' or char_length(btrim(coalesce(source_note, ''))) >= 1));
 alter table public.posts add column if not exists solved boolean not null default false;
 create index if not exists resources_featured_idx on public.resources (created_at desc) where featured;
 create index if not exists posts_category_idx on public.posts (category, created_at desc);
@@ -211,6 +220,17 @@ create table if not exists public.bookmarks (
 );
 create unique index if not exists bookmarks_resource_uniq on public.bookmarks (user_id, resource_id) where resource_id is not null;
 create unique index if not exists bookmarks_post_uniq on public.bookmarks (user_id, post_id) where post_id is not null;
+
+-- "수업에 써 봤어요": 한 사람이 한 자료에 한 번, 한 줄 후기는 선택
+create table if not exists public.classroom_uses (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  resource_id bigint not null references public.resources (id) on delete cascade,
+  note        text not null default '' check (char_length(note) <= 200),
+  created_at  timestamptz not null default now(),
+  unique (user_id, resource_id)
+);
+create index if not exists classroom_uses_resource_idx on public.classroom_uses (resource_id);
 
 create table if not exists public.reports (
   id          bigint generated always as identity primary key,
@@ -284,7 +304,7 @@ end $$;
 --    Supabase 는 기본으로 모든 칸 권한을 주므로, 필요한 것만 다시 준다.
 -- ---------------------------------------------------------------------
 revoke all on public.profiles, public.profile_private, public.resources, public.posts,
-              public.comments, public.likes, public.bookmarks, public.reports
+              public.comments, public.likes, public.bookmarks, public.reports, public.classroom_uses
   from anon, authenticated;
 -- app_flags·downloads 는 함수만 쓴다 (RLS 켜고 정책 없음)
 revoke all on public.app_flags, public.downloads from anon, authenticated;
@@ -296,9 +316,9 @@ grant select on public.profile_private to authenticated;
 grant update (school, note) on public.profile_private to authenticated;
 
 grant select, delete on public.resources to authenticated;
-grant insert (title, description, school_level, subject, unit, resource_type, link_url, files)
+grant insert (title, description, school_level, subject, unit, resource_type, link_url, files, source_kind, source_note)
   on public.resources to authenticated;
-grant update (title, description, school_level, subject, unit, resource_type, link_url, files)
+grant update (title, description, school_level, subject, unit, resource_type, link_url, files, source_kind, source_note)
   on public.resources to authenticated;
 
 grant select, delete on public.posts to authenticated;
@@ -314,6 +334,9 @@ grant insert (resource_id, post_id) on public.likes to authenticated;
 
 grant select, delete on public.bookmarks to authenticated;
 grant insert (resource_id, post_id) on public.bookmarks to authenticated;
+
+grant select, delete on public.classroom_uses to authenticated;
+grant insert (resource_id, note) on public.classroom_uses to authenticated;
 
 grant select, delete on public.reports to authenticated;
 grant insert (resource_id, post_id, comment_id, reason) on public.reports to authenticated;
@@ -340,6 +363,7 @@ alter table public.comments        enable row level security;
 alter table public.likes           enable row level security;
 alter table public.bookmarks       enable row level security;
 alter table public.reports         enable row level security;
+alter table public.classroom_uses  enable row level security;
 
 -- profiles: 본인·관리자는 늘, 승인 회원은 다른 승인 회원 이름만
 drop policy if exists "profiles 보기" on public.profiles;
@@ -420,6 +444,17 @@ create policy "bookmarks 담기" on public.bookmarks for insert to authenticated
   with check (public.is_approved() and user_id = auth.uid());
 drop policy if exists "bookmarks 빼기" on public.bookmarks;
 create policy "bookmarks 빼기" on public.bookmarks for delete to authenticated
+  using (user_id = auth.uid());
+
+-- classroom_uses: likes 와 같다 — 승인 회원이 보고, 남기기·취소는 본인
+drop policy if exists "classroom_uses 보기" on public.classroom_uses;
+create policy "classroom_uses 보기" on public.classroom_uses for select to authenticated
+  using (public.is_approved());
+drop policy if exists "classroom_uses 남기기" on public.classroom_uses;
+create policy "classroom_uses 남기기" on public.classroom_uses for insert to authenticated
+  with check (public.is_approved() and user_id = auth.uid());
+drop policy if exists "classroom_uses 취소" on public.classroom_uses;
+create policy "classroom_uses 취소" on public.classroom_uses for delete to authenticated
   using (user_id = auth.uid());
 
 -- reports: 승인 회원이 신고, 관리자가 처리

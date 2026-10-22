@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { randomStory, storyOfDay, type HistoryStory } from '@/lib/math-history'
 import { useAuth } from './AuthProvider'
@@ -15,6 +16,8 @@ const dateFmt = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric'
  */
 export function MathHistory() {
   const { isApproved } = useAuth()
+  // 모아 보기 화면 안에서는 "전체 보기" 링크가 필요 없다
+  const isHistoryPage = usePathname() === '/history'
   // 날짜로 고르는 이야기는 서버와 브라우저가 다를 수 있어서, 화면이 뜬 뒤에 정한다
   const [story, setStory] = useState<HistoryStory | null>(null)
   const [isToday, setIsToday] = useState(true)
@@ -42,6 +45,14 @@ export function MathHistory() {
             <span className="badge bg-amber-100 text-amber-800">{story.era}</span>
             <span className="badge">{story.unit}</span>
           </span>
+        )}
+        {!isHistoryPage && (
+          <Link
+            href="/history"
+            className={`whitespace-nowrap text-xs font-semibold text-amber-700 hover:underline ${story ? '' : 'ml-auto'}`}
+          >
+            전체 보기 →
+          </Link>
         )}
       </div>
 

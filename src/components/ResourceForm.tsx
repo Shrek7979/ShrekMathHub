@@ -7,7 +7,7 @@ import { RESOURCE_TYPES, SUBJECTS, UNIT_HINTS, subjectsOf } from '@/lib/curricul
 import { ACCEPT, MAX_FILES, checkFile, removeFiles, uploadFile } from '@/lib/files'
 import { fileSize, koError } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
-import type { FileInfo, Resource, SchoolLevel } from '@/lib/types'
+import { SOURCE_KINDS, type FileInfo, type Resource, type SchoolLevel, type SourceKind } from '@/lib/types'
 import { useDraft } from '@/lib/useDraft'
 import { useAuth } from './AuthProvider'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -33,6 +33,8 @@ export function ResourceForm({
   const [type, setType] = useState(initial?.resource_type ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [link, setLink] = useState(initial?.link_url ?? '')
+  const [sourceKind, setSourceKind] = useState<SourceKind>(initial?.source_kind ?? 'own')
+  const [sourceNote, setSourceNote] = useState(initial?.source_note ?? '')
   const [kept, setKept] = useState<FileInfo[]>(initial?.files ?? [])
   const [added, setAdded] = useState<File[]>([])
   const [agreeCopyright, setAgreeCopyright] = useState(!!initial)
@@ -40,7 +42,7 @@ export function ResourceForm({
   // 새 자료는 적던 글을 임시 저장 (파일은 저장할 수 없어서 다시 골라야 함)
   const draft = useDraft(
     `smh-draft-resource:${session?.user.id ?? ''}`,
-    { title, level, subject, unit, type, description, link },
+    { title, level, subject, unit, type, description, link, sourceKind, sourceNote },
     (d) => {
       setTitle(d.title ?? '')
       if (d.level === '중' || d.level === '고') setLevel(d.level)
@@ -49,6 +51,8 @@ export function ResourceForm({
       setType(d.type ?? '')
       setDescription(d.description ?? '')
       setLink(d.link ?? '')
+      if (SOURCE_KINDS.some((s) => s.value === d.sourceKind)) setSourceKind(d.sourceKind)
+      setSourceNote(d.sourceNote ?? '')
     },
     !initial,
   )
@@ -84,6 +88,8 @@ export function ResourceForm({
     const url = link.trim()
     if (url && !/^https?:\/\/\S+$/i.test(url)) return setError('링크는 https:// 로 시작하는 주소로 넣어 주세요.')
     if (fileCount === 0 && !url) return setError('파일이나 링크 중 하나는 꼭 넣어 주세요.')
+    const note = sourceNote.trim()
+    if (sourceKind === 'adapted' && !note) return setError('다른 자료를 고쳐 만든 자료는 어떤 자료를 바탕으로 했는지 출처를 적어 주세요.')
     if (!agreeCopyright || !agreePrivacy) return setError('아래 두 가지 확인에 체크해 주세요.')
 
     const uploaded: FileInfo[] = []
@@ -102,6 +108,8 @@ export function ResourceForm({
         description: description.trim(),
         link_url: url || null,
         files: [...kept, ...uploaded],
+        source_kind: sourceKind,
+        source_note: note || null,
       }
       const { data, error } = initial
         ? await supabase.from('resources').update(row).eq('id', initial.id).select('id').maybeSingle()
@@ -134,6 +142,8 @@ export function ResourceForm({
             setType('')
             setDescription('')
             setLink('')
+            setSourceKind('own')
+            setSourceNote('')
           }}
         />
       )}
@@ -294,6 +304,56 @@ export function ResourceForm({
           placeholder="https://www.geogebra.org/m/..."
         />
       </div>
+
+      <fieldset>
+        <legend className="label">
+          출처 <Req />
+        </legend>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {SOURCE_KINDS.map((s) => (
+            <label
+              key={s.value}
+              className={`flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+                sourceKind === s.value ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-white hover:border-brand-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="source_kind"
+                value={s.value}
+                checked={sourceKind === s.value}
+                onChange={() => setSourceKind(s.value)}
+                className="mt-1 accent-brand-600"
+              />
+              <span>
+                <span className="font-semibold text-slate-800">
+                  {s.icon} {s.label}
+                </span>
+                <span className="mt-0.5 block text-xs text-slate-500">{s.help}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        {sourceKind !== 'own' && (
+          <div className="mt-2">
+            <label className="label" htmlFor="source-note">
+              출처 설명 {sourceKind === 'adapted' ? <Req /> : <span className="font-normal text-slate-400">(선택)</span>}
+            </label>
+            <input
+              id="source-note"
+              className="input"
+              value={sourceNote}
+              onChange={(e) => setSourceNote(e.target.value)}
+              maxLength={200}
+              placeholder={
+                sourceKind === 'adapted'
+                  ? '예) ○○ 선생님의 이차함수 활동지(허브)를 중2 수준으로 고침'
+                  : '예) 교육부 공개 자료, GeoGebra 공식 교재 (누가 만든 것인지)'
+              }
+            />
+          </div>
+        )}
+      </fieldset>
 
       <fieldset className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         <legend className="sr-only">올리기 전 확인</legend>

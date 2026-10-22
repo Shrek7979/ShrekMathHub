@@ -2,10 +2,21 @@ import Link from 'next/link'
 import { NOTICE, QUESTION } from '@/lib/curriculum'
 import { extOf } from '@/lib/files'
 import { timeAgo } from '@/lib/format'
-import { countOf, type Post, type Resource } from '@/lib/types'
+import { countOf, sourceKindOf, type Post, type Resource } from '@/lib/types'
 
 export const RESOURCE_LIST_COLUMNS =
-  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, featured, created_at, author:profiles!author_id(name, role), likes(count), comments(count)'
+  'id, title, school_level, subject, unit, resource_type, files, link_url, download_count, featured, source_kind, created_at, author:profiles!author_id(name, role), likes(count), comments(count), classroom_uses(count)'
+
+/** 출처 배지. 기본값인 '직접 만듦'은 목록에서는 생략할 수 있다 (always=false) */
+export function SourceBadge({ kind, always = false }: { kind?: string | null; always?: boolean }) {
+  const s = sourceKindOf(kind)
+  if (!always && s.value === 'own') return null
+  return (
+    <span className={`badge ${s.value === 'own' ? '' : 'bg-sky-50 text-sky-700'}`} title={s.label}>
+      {s.icon} {s.short}
+    </span>
+  )
+}
 
 export const POST_LIST_COLUMNS = 'id, category, title, solved, created_at, author:profiles!author_id(name, role), likes(count), comments(count)'
 
@@ -57,6 +68,7 @@ export function ResourceItem({ r, compact = false }: { r: Resource; compact?: bo
             {r.subject}
             {r.unit && ` · ${r.unit}`}
           </span>
+          <SourceBadge kind={r.source_kind} />
         </div>
         <p className="mt-1.5 font-semibold text-slate-900">{r.title}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
@@ -68,6 +80,7 @@ export function ResourceItem({ r, compact = false }: { r: Resource; compact?: bo
             <span title="내려받기">⬇ {r.download_count}</span>
             <span title="좋아요">♡ {countOf(r.likes)}</span>
             <span title="댓글">💬 {countOf(r.comments)}</span>
+            <span title="수업에 써 봤어요">🏫 {countOf(r.classroom_uses)}</span>
           </span>
         </div>
       </Link>

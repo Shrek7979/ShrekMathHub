@@ -243,6 +243,38 @@ await test('관리자 통계는 관리자만', async () => {
   eq(typeof s.storage_bytes, 'number')
 })
 
+console.log('\n출처 구분·수업 후기')
+await test('출처: 기본은 직접 만듦, 고친 자료는 출처 설명이 꼭 있어야 하고, 이상한 값·200자 넘는 설명은 거절', async () => {
+  eq(await one(B, 'select source_kind, source_note from resources where id = $1', [rB.id]), { source_kind: 'own', source_note: null })
+  const insS = (kind, note) => as(B, `insert into resources (title, school_level, subject, resource_type, files, source_kind, source_note)
+                                     values ('s', '고', '대수', '기타', '[]', $1, $2) returning id`, [kind, note])
+  await fails(insS('adapted', null), /resources_source_valid/)
+  await fails(insS('adapted', '   '), /resources_source_valid/)
+  await fails(insS('stolen', null), /resources_source_valid/)
+  await fails(insS('linked', 'x'.repeat(201)), /resources_source_valid/)
+  if (!(await insS('adapted', 'EBS 공개 활동지를 중2 수준으로 고침')).rows[0]?.id) throw new Error('정상 출처가 거절됨')
+  if (!(await insS('linked', null)).rows[0]?.id) throw new Error('공개 자료 링크가 거절됨')
+  eq((await rows(B, `update resources set source_kind = 'linked', source_note = '교육부 공개 자료' where id = $1 returning source_kind`, [rB.id])),
+    [{ source_kind: 'linked' }])
+})
+await test('수업에 써 봤어요: 승인 회원이 한 번만, 대기 회원은 못 남기고 못 봄', async () => {
+  const u = await one(B, `insert into classroom_uses (resource_id, note) values ($1, '중2 도입 활동으로 썼어요') returning id, user_id`, [rA.id])
+  eq(u.user_id, B)
+  await fails(as(B, 'insert into classroom_uses (resource_id) values ($1)', [rA.id]), /duplicate/)
+  await fails(as(B, `insert into classroom_uses (resource_id, note) values ($1, $2)`, [rB.id, 'x'.repeat(201)]), /check/)
+  await fails(as(B, 'insert into classroom_uses (resource_id, user_id) values ($1, $2)', [rB.id, A]), /permission denied/)
+  await fails(as(C, 'insert into classroom_uses (resource_id) values ($1)', [rA.id]), /row-level security/)
+  eq(await rows(C, 'select id from classroom_uses'), [])
+  await fails(as(null, 'select id from classroom_uses'), /permission denied/)
+})
+await test('수업에 써 봤어요: 다른 회원은 수와 후기를 보고, 취소는 본인만', async () => {
+  eq(await rows(A, 'select note from classroom_uses where resource_id = $1', [rA.id]), [{ note: '중2 도입 활동으로 썼어요' }])
+  eq(await rows(A, 'delete from classroom_uses where resource_id = $1 returning id', [rA.id]), [])
+  await fails(as(B, `update classroom_uses set note = '바꿈' where resource_id = $1`, [rA.id]), /permission denied/)
+  eq((await rows(B, 'delete from classroom_uses where resource_id = $1 returning id', [rA.id])).length, 1)
+  eq(await rows(A, 'select id from classroom_uses where resource_id = $1', [rA.id]), [])
+})
+
 console.log('\n안전장치')
 await test('자료 파일 정보: 이상한 항목·남의 경로는 거절, 내 경로는 통과', async () => {
   const ins2 = (files) => as(B, `insert into resources (title, school_level, subject, resource_type, files)

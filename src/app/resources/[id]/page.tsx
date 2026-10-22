@@ -4,10 +4,11 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
+import { ClassroomUses } from '@/components/ClassroomUses'
 import { CommentSection } from '@/components/CommentSection'
 import { FilePreview, canPreview } from '@/components/FilePreview'
 import { Gate } from '@/components/Gate'
-import { AuthorName, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
+import { AuthorName, RESOURCE_LIST_COLUMNS, ResourceItem, SourceBadge } from '@/components/ListItems'
 import { Markdown } from '@/components/Markdown'
 import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
@@ -135,6 +136,7 @@ function Detail() {
               {r.unit}
             </Link>
           )}
+          <SourceBadge kind={r.source_kind} always />
         </div>
         <h1 className="mt-2 text-2xl font-bold leading-snug text-slate-900">{r.title}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
@@ -145,6 +147,12 @@ function Detail() {
           {r.updated_at.slice(0, 16) !== r.created_at.slice(0, 16) && <span className="text-xs">(고침 {fullDate(r.updated_at)})</span>}
           <span className="tabular-nums">⬇ {r.download_count}</span>
         </div>
+        {r.source_note && (
+          <p className="mt-2 text-sm text-slate-600">
+            <span className="mr-1.5 font-semibold text-slate-500">출처</span>
+            {r.source_note}
+          </p>
+        )}
       </header>
 
       {(r.files.length > 0 || r.link_url) && (
@@ -214,6 +222,7 @@ function Detail() {
 
       <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
         <Reactions target={{ resourceId: r.id }} />
+        <ClassroomUses resourceId={r.id} />
         <ShareButton title={r.title} />
         <div className="ml-auto flex flex-wrap items-center gap-3">
           {!mine && <ReportButton resourceId={r.id} />}
