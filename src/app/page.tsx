@@ -150,10 +150,10 @@ function Dashboard() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-500">반가워요</p>
-          <h1 className="page-title">{profile?.name} 선생님 👋</h1>
+          <h1 className="page-title">{profile?.name} 선생님, 반가워요 👋</h1>
+          <TodayLine />
         </div>
         <div className="flex gap-2">
           <Link href="/resources/new" className="btn-primary">
@@ -180,12 +180,8 @@ function Dashboard() {
         </Link>
       )}
 
-      <div className="mt-5">
+      <div className="mt-6">
         <MathHistory />
-      </div>
-
-      <div className="mt-5">
-        <SiteBanners />
       </div>
 
       {failed ? (
@@ -281,6 +277,11 @@ function Dashboard() {
           </div>
 
           <section className="mt-10">
+            <SectionHead title="🌐 함께 보면 좋은 사이트" href="/links" more="링크 모음 →" />
+            <SiteBanners compact />
+          </section>
+
+          <section className="mt-10">
             <SectionHead title="🔗 수업 준비 바로가기" href="/links" more="링크 모음 →" />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {LINK_GROUPS.flatMap((g) => g.links)
@@ -322,28 +323,30 @@ function WelcomeGuide() {
     ['∑', '수식 쓰기', '글·댓글에서 $x^2$ 처럼 $ 로 감싸거나 편집기의 수식 버튼을 눌러요.', '/board/new'],
   ]
   return (
-    <section className="card relative mt-5 p-5">
-      <button
-        onClick={() => {
-          setOpen(false)
-          try {
-            localStorage.setItem(KEY, '1')
-          } catch {}
-        }}
-        className="absolute right-3 top-3 rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-        aria-label="안내 닫기"
-      >
-        닫기 ✕
-      </button>
-      <h2 className="font-bold text-slate-900">처음 오셨나요? 이렇게 써 보세요</h2>
-      <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+    <section className="card mt-4 px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-700">처음 오셨나요? 이렇게 써 보세요</h2>
+        <button
+          onClick={() => {
+            setOpen(false)
+            try {
+              localStorage.setItem(KEY, '1')
+            } catch {}
+          }}
+          className="rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          aria-label="안내 닫기"
+        >
+          닫기 ✕
+        </button>
+      </div>
+      <ul className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map(([icon, title, desc, href]) => (
           <li key={title}>
-            <Link href={href} className="flex gap-3 rounded-lg p-2 hover:bg-slate-50">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-lg text-brand-700">{icon}</span>
-              <span>
-                <b className="text-sm text-slate-900">{title}</b>
-                <span className="block text-xs leading-relaxed text-slate-500">{desc}</span>
+            <Link href={href} className="flex items-start gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-50" title={desc}>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-base text-brand-700">{icon}</span>
+              <span className="min-w-0">
+                <b className="block text-sm text-slate-900">{title}</b>
+                <span className="line-clamp-2 text-xs leading-snug text-slate-500">{desc}</span>
               </span>
             </Link>
           </li>
@@ -351,6 +354,15 @@ function WelcomeGuide() {
       </ul>
     </section>
   )
+}
+
+const todayFmt = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })
+
+/** 머리 아래 "10월 22일 목요일" 한 줄 */
+function TodayLine() {
+  const [text, setText] = useState('')
+  useEffect(() => setText(todayFmt.format(new Date())), [])
+  return <p className="mt-0.5 text-sm text-slate-500">{text || ' '}</p>
 }
 
 /** 첫 화면의 큰 찾기 칸 → /search */
@@ -363,11 +375,11 @@ function HubSearch() {
         e.preventDefault()
         if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`)
       }}
-      className="mt-5 flex gap-2"
+      className="mt-4 flex gap-2"
       role="search"
     >
       <input
-        className="input py-3 text-base"
+        className="input py-2.5 text-base"
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -381,8 +393,8 @@ function HubSearch() {
 
 function SectionHead({ title, href, more = '더 보기 →', badge }: { title: string; href: string; more?: string; badge?: string }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-2">
-      <h2 className="font-bold text-slate-900">
+    <div className="mb-3 flex items-end justify-between gap-2 border-b border-slate-200 pb-2">
+      <h2 className="text-[15px] font-bold text-slate-900">
         {title}
         {badge && <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 align-middle text-[11px] font-bold text-white">{badge}</span>}
       </h2>

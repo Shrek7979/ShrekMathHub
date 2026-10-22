@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { randomStory, storyOfDay, type HistoryStory } from '@/lib/math-history'
 import { useAuth } from './AuthProvider'
+import { HistoryArt } from './HistoryArt'
 import { Markdown } from './Markdown'
 
 const dateFmt = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
@@ -49,9 +50,16 @@ export function MathHistory() {
           <div className="h-20 animate-pulse rounded-lg bg-slate-100" aria-hidden />
         ) : (
           <>
-            <h3 className="text-lg font-bold text-slate-900">{story.title}</h3>
-            <div className="mt-2 text-[15px] leading-relaxed text-slate-700">
-              <Markdown>{story.body}</Markdown>
+            <div className="flex gap-4">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-amber-50 p-2 text-amber-700 sm:h-28 sm:w-28">
+                <HistoryArt name={story.art} className="h-full w-full" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg font-bold text-slate-900">{story.title}</h3>
+                <div className="mt-2 text-[15px] leading-relaxed text-slate-700">
+                  <Markdown>{story.body}</Markdown>
+                </div>
+              </div>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">

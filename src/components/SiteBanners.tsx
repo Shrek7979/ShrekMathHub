@@ -25,21 +25,26 @@ const SITES = [
   },
 ]
 
-export function SiteBanners() {
+/** compact: 첫 화면 아래쪽에 작게 (양옆 패널에 이미 보이는 사이트라 크게 둘 필요가 없음) */
+export function SiteBanners({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className={`grid gap-3 sm:grid-cols-2 xl:grid-cols-3 ${compact ? 'gap-2' : ''}`}>
       {SITES.map((s) => (
         <a
           key={s.href}
           href={s.href}
           target="_blank"
           rel="noopener noreferrer"
-          className={`group flex items-center gap-4 rounded-xl bg-gradient-to-r px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${s.className}`}
+          className={`group flex items-center rounded-xl bg-gradient-to-r text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+            compact ? 'gap-3 px-4 py-2.5' : 'gap-4 px-5 py-4'
+          } ${s.className}`}
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/15 text-2xl">{s.icon}</span>
+          <span className={`flex shrink-0 items-center justify-center rounded-lg bg-white/15 ${compact ? 'h-8 w-8 text-lg' : 'h-11 w-11 text-2xl'}`}>
+            {s.icon}
+          </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-bold">{s.name}</span>
-            <span className="block text-sm leading-snug text-white/80 sm:truncate">{s.desc}</span>
+            <span className={`block font-bold ${compact ? 'text-sm' : ''}`}>{s.name}</span>
+            <span className={`block leading-snug text-white/80 sm:truncate ${compact ? 'text-xs' : 'text-sm'}`}>{s.desc}</span>
           </span>
           <span className="shrink-0 text-sm font-semibold text-white/80 transition group-hover:translate-x-0.5 group-hover:text-white">
             <span className="hidden sm:inline">바로 가기 </span>↗

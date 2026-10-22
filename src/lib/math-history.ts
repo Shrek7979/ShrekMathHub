@@ -3,9 +3,12 @@
  * 날짜(한국 시간)마다 한 편씩 돌아가며 나온다. 이야기를 더하려면 이 목록에 넣기만 하면 된다.
  * - body / classroom: 글·댓글과 같은 마크다운. $x^2$ 처럼 쓰면 수식으로 보인다.
  * - classroom: 수업에서 이 이야기를 꺼내 쓰는 방법 (어느 단원, 어떤 활동)
+ * - art: 왼쪽 삽화 (components/HistoryArt.tsx 에 그림을 더하고 그 이름을 적는다)
  */
 export type HistoryStory = {
   id: number
+  /** 삽화 이름 (components/HistoryArt.tsx 의 ART 키) */
+  art: string
   title: string
   /** 시대 또는 연도 (배지에 보임) */
   era: string
@@ -18,6 +21,7 @@ export type HistoryStory = {
 export const STORIES: HistoryStory[] = [
   {
     id: 1,
+    art: 'sqrt2',
     title: '피타고라스 학파를 흔든 √2',
     era: '기원전 6세기',
     unit: '중3 제곱근과 실수',
@@ -26,6 +30,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 2,
+    art: 'euclid',
     title: '2000년 넘게 쓰인 교과서, 유클리드 『원론』',
     era: '기원전 300년경',
     unit: '중1 기본 도형·작도',
@@ -34,6 +39,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 3,
+    art: 'pi-polygon',
     title: '아르키메데스, 다각형으로 π를 조이다',
     era: '기원전 3세기',
     unit: '중1 평면도형(원주율)',
@@ -42,6 +48,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 4,
+    art: 'earth',
     title: '막대기 그림자로 잰 지구 둘레',
     era: '기원전 240년경',
     unit: '중3 삼각비 · 원의 호',
@@ -50,6 +57,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 5,
+    art: 'conic',
     title: '알렉산드리아의 히파티아',
     era: '4~5세기',
     unit: '고 이차곡선',
@@ -58,6 +66,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 6,
+    art: 'zero',
     title: '0을 수로 만든 브라마굽타',
     era: '628년',
     unit: '중1 정수와 유리수',
@@ -66,6 +75,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 7,
+    art: 'algebra',
     title: '알고리즘과 대수, 이름의 주인 알콰리즈미',
     era: '9세기',
     unit: '중3 이차방정식',
@@ -74,6 +84,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 8,
+    art: 'fibonacci',
     title: '토끼 한 쌍에서 시작된 피보나치 수열',
     era: '1202년',
     unit: '고 수열',
@@ -82,6 +93,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 9,
+    art: 'cubic',
     title: '3차방정식 결투와 복소수의 탄생',
     era: '1545년',
     unit: '고 복소수',
@@ -90,6 +102,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 10,
+    art: 'log',
     title: '네이피어의 로그, 계산을 절반으로',
     era: '1614년',
     unit: '고 지수함수와 로그함수',
@@ -98,6 +111,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 11,
+    art: 'coordinates',
     title: '데카르트, 도형을 식으로 쓰다',
     era: '1637년',
     unit: '중1 좌표평면 · 고 도형의 방정식',
@@ -106,6 +120,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 12,
+    art: 'fermat',
     title: '여백이 좁아서 — 페르마의 마지막 정리',
     era: '1637년경 → 1995년',
     unit: '중2 피타고라스 정리',
@@ -114,6 +129,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 13,
+    art: 'dice',
     title: '도박사의 편지에서 시작된 확률론',
     era: '1654년',
     unit: '중2 확률',
@@ -122,6 +138,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 14,
+    art: 'tangent',
     title: '뉴턴과 라이프니츠, 누가 먼저?',
     era: '1660~1680년대',
     unit: '고 미분',
@@ -130,6 +147,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 15,
+    art: 'graph',
     title: '쾨니히스베르크의 다리 일곱 개',
     era: '1736년',
     unit: '공통 · 한붓그리기',
@@ -138,6 +156,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 16,
+    art: 'sum',
     title: '가우스와 1부터 100까지의 합',
     era: '1780년대',
     unit: '고 수열(등차수열의 합)',
@@ -146,6 +165,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 17,
+    art: 'galois',
     title: '결투 전날 밤의 편지, 갈루아',
     era: '1832년',
     unit: '고 방정식',
@@ -154,6 +174,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 18,
+    art: 'hyperbolic',
     title: '평행선 공준을 버린 기하학',
     era: '1829년',
     unit: '중1 평면도형 · 고 기하',
@@ -162,6 +183,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 19,
+    art: 'riemann',
     title: '리만의 적분과 150년 묵은 가설',
     era: '1854년 · 1859년',
     unit: '고 적분 · 소수',
@@ -170,6 +192,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 20,
+    art: 'infinity',
     title: '무한에도 크기가 있다, 칸토어',
     era: '1874년 · 1891년',
     unit: '고 집합과 명제',
@@ -178,6 +201,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 21,
+    art: 'hilbert',
     title: '1900년 파리, 힐베르트의 23문제',
     era: '1900년',
     unit: '공통',
@@ -186,6 +210,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 22,
+    art: 'symmetry',
     title: '대칭이 곧 보존, 에미 뇌터',
     era: '1915년',
     unit: '중1 대칭 · 고 함수',
@@ -194,6 +219,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 23,
+    art: 'taxi',
     title: '택시 번호 1729, 라마누잔',
     era: '1913~1920년',
     unit: '중1 소인수분해 · 고 수열',
@@ -202,6 +228,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 24,
+    art: 'godel',
     title: '참이지만 증명할 수 없는 명제, 괴델',
     era: '1931년',
     unit: '고 집합과 명제',
@@ -210,6 +237,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 25,
+    art: 'turing',
     title: '튜링, 계산이란 무엇인가',
     era: '1936년 · 1950년',
     unit: '고 인공지능 수학',
@@ -218,6 +246,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 26,
+    art: 'sangaji',
     title: '조선 산학의 걸작, 홍정하의 『구일집』',
     era: '1724년',
     unit: '중1 일차방정식 · 고 다항식',
@@ -226,6 +255,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 27,
+    art: 'magic-square',
     title: '오일러보다 앞선 최석정의 마방진',
     era: '1700년경',
     unit: '공통 · 행렬',
@@ -234,6 +264,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 28,
+    art: 'sejong',
     title: '수학을 공부한 임금, 세종',
     era: '1430년',
     unit: '공통',
@@ -242,6 +273,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 29,
+    art: 'textbook',
     title: '우리 손으로 쓴 첫 근대 수학 교과서',
     era: '1900년',
     unit: '공통',
@@ -250,6 +282,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 30,
+    art: 'pi-digits',
     title: 'π의 자릿수 경쟁',
     era: '1596년 → 2022년',
     unit: '중1 원주율',
@@ -258,6 +291,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 31,
+    art: 'primes',
     title: '소수는 끝이 없다, 그리고 가장 큰 소수',
     era: '기원전 300년 → 2024년',
     unit: '중1 소인수분해',
@@ -266,6 +300,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 32,
+    art: 'map4',
     title: '지도는 네 가지 색이면 충분하다',
     era: '1852년 → 1976년',
     unit: '공통 · 경우의 수',
@@ -274,6 +309,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 33,
+    art: 'spheres',
     title: '오렌지 쌓기 400년, 케플러 추측',
     era: '1611년 → 1998년',
     unit: '중1 입체도형',
@@ -282,6 +318,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 34,
+    art: 'torus',
     title: '100만 달러를 거절한 페렐만',
     era: '2003년',
     unit: '공통 · 공간도형',
@@ -290,6 +327,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 35,
+    art: 'medal',
     title: '허준이, 한국계 최초의 필즈상',
     era: '2022년',
     unit: '고 경우의 수 · 다항식',
@@ -298,6 +336,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 36,
+    art: 'golden',
     title: '황금비, 진실과 신화 사이',
     era: '기원전 300년경',
     unit: '중3 이차방정식',
@@ -306,6 +345,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 37,
+    art: 'rose',
     title: '그래프로 병원을 바꾼 나이팅게일',
     era: '1858년',
     unit: '중1 자료의 정리와 해석',
@@ -314,6 +354,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 38,
+    art: 'coin',
     title: '많이 던질수록 확률에 가까워진다',
     era: '1713년',
     unit: '중2 확률 · 고 통계',
@@ -322,6 +363,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 39,
+    art: 'unit-circle',
     title: '사인·코사인은 어디서 왔을까',
     era: '기원전 2세기 → 9세기',
     unit: '중3 삼각비',
@@ -330,6 +372,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 40,
+    art: 'letter',
     title: '가명으로 가우스에게 편지한 소피 제르맹',
     era: '1804년',
     unit: '중1 소수',
@@ -338,6 +381,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 41,
+    art: 'equals',
     title: '= 기호를 만든 사람',
     era: '1557년',
     unit: '중1 문자와 식',
@@ -346,6 +390,7 @@ export const STORIES: HistoryStory[] = [
   },
   {
     id: 42,
+    art: 'mountain',
     title: '에베레스트의 높이를 계산한 사람',
     era: '1852년',
     unit: '중3 삼각비의 활용',
