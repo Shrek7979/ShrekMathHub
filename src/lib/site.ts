@@ -3,6 +3,8 @@ export const SITE = {
   name: 'Shrek Math Hub',
   tagline: '중·고 수학 선생님들의 나눔터',
   newsUrl: 'https://shrek7979.github.io/ShrekEduInsight/?s=math',
+  /** 허브 옆 패널에서만 쓰는 주소: 열리자마자 자동 넘김(끝나면 처음부터). 배너·링크는 newsUrl */
+  newsPanelUrl: 'https://shrek7979.github.io/ShrekEduInsight/?s=math&auto=1',
   /** 학생용 하루 한 문제 사이트 (오늘의 수학 문제 코너와 짝) */
   shrekMathUrl: 'https://shrekmath.vercel.app/',
   greensoriUrl: 'https://greensori-map.vercel.app/',

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { SITE } from '@/lib/site'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 
-const NEWS_URL = SITE.newsUrl
+const NEWS_URL = SITE.newsPanelUrl
 const STORAGE_KEY = 'smh-news-panel'
 
 /**
@@ -86,7 +86,7 @@ function PanelHeader({ onClose, closeLabel }: { onClose: () => void; closeLabel:
         <p className="text-[11px] text-slate-500">오늘의 수학, 수업이 되는 뉴스</p>
       </div>
       <a
-        href={NEWS_URL}
+        href={SITE.newsUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="ml-auto rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800"
