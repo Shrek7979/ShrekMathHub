@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
-import { DailyProblem } from '@/components/DailyProblem'
+import { MathHistory } from '@/components/MathHistory'
 import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem, RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
 import { SiteBanners } from '@/components/SiteBanners'
@@ -32,7 +32,9 @@ function Landing() {
     ['🗺️', '교육과정 지도', '2022 개정 교육과정 과목·단원별로 모인 자료를 한눈에 봐요.'],
     ['💬', '질문·나눔 게시판', '"이 단원 어떻게 가르치세요?" 수업 고민을 함께 풀어요.'],
     ['∑', '수식 그대로', '$x^2$ 처럼 쓰면 글과 댓글에서 수식이 바로 보여요.'],
-    ['🧩', '오늘의 수학 문제', '대문에서 날마다 한 문제. 답을 맞혀 보고, 풀이와 수업 활용 아이디어를 나눠요.'],
+    ['📰', '오늘의 수학 뉴스', '화면 왼쪽에서 Shrek Edu Insight 수학 뉴스를 늘 함께 봐요.'],
+    ['📜', '오늘의 수학사', '날마다 수학 역사 이야기 한 편과 "수업에서 이렇게" 팁. 수업 시작 5분 이야깃거리.'],
+    ['🎓', 'ShrekMath', '학생용 하루 한 문제 사이트가 화면 오른쪽에. 학생이 올린 풀이 사진을 AI가 채점·첨삭해요.'],
     ['🔒', '선생님만', '관리자가 승인한 수학 선생님만 들어와요. 평가 자료도 안심하고 나눠요.'],
   ]
   return (
@@ -57,15 +59,13 @@ function Landing() {
         </div>
       </section>
 
-      {/* 대문의 특징: 날마다 한 문제, 답을 생각해 보는 코너 (아주 넓은 화면에서는 오른쪽 패널에) */}
-      <section className="mx-auto mt-8 max-w-3xl 2xl:hidden">
-        <DailyProblem />
-        <p className="mt-2 text-center text-xs text-slate-500">
-          날마다 새 문제가 올라와요. 수업 시작 5분, 학생들과 함께 풀어 보세요.
-        </p>
+      {/* 대문의 특징: 날마다 수학사 이야기 한 편 (학생용 오늘의 문제는 오른쪽 ShrekMath 패널) */}
+      <section className="mx-auto mt-8 max-w-3xl">
+        <MathHistory />
+        <p className="mt-2 text-center text-xs text-slate-500">날마다 새 이야기가 올라와요. 수업 시작 5분, 학생들에게 들려주세요.</p>
       </section>
 
-      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {features.map(([icon, title, desc]) => (
           <div key={title} className="card p-5">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-xl text-brand-700">{icon}</div>
@@ -180,8 +180,8 @@ function Dashboard() {
         </Link>
       )}
 
-      <div className="mt-5 2xl:hidden">
-        <DailyProblem />
+      <div className="mt-5">
+        <MathHistory />
       </div>
 
       <div className="mt-5">

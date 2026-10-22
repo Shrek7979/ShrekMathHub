@@ -5,7 +5,7 @@ import { AuthProvider } from '@/components/AuthProvider'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { NewsPanel } from '@/components/NewsPanel'
-import { ProblemPanel } from '@/components/ProblemPanel'
+import { ShrekMathPanel } from '@/components/ShrekMathPanel'
 import { SetupNotice } from '@/components/SetupNotice'
 import { isConfigured } from '@/lib/supabase'
 
@@ -45,7 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <AuthProvider>
           <Header />
-          {/* 왼쪽: Shrek Edu Insight 수학 뉴스 (늘 보임), 가운데: 사이트 화면, 오른쪽: 오늘의 수학 문제 (아주 넓은 화면) */}
+          {/* 왼쪽: Shrek Edu Insight 수학 뉴스 (늘 보임), 가운데: 사이트 화면, 오른쪽: 학생용 ShrekMath (아주 넓은 화면) */}
           <div className="flex w-full flex-1">
             <NewsPanel />
             <div className="flex min-w-0 flex-1 flex-col">
@@ -56,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </main>
               <Footer />
             </div>
-            <ProblemPanel />
+            <ShrekMathPanel />
           </div>
         </AuthProvider>
       </body>
