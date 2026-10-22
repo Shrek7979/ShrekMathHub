@@ -64,3 +64,8 @@ export const NOTICE = '공지'
 export const BOARD_CATEGORIES = ['질문', '수업 나눔', '평가·수행평가', '교육과정·연수', '업무·생활', '자유']
 
 export const QUESTION = '질문'
+
+/** 단원 페이지 주소 (자료·글·수학사·앞뒤 단원을 한 화면에). 학습맵·교육과정·자료 상세에서 단원을 누르면 여기로 */
+export function unitHref(level: SchoolLevel, subject: string, unit: string) {
+  return `/unit?level=${level}&subject=${encodeURIComponent(subject)}&unit=${encodeURIComponent(unit)}`
+}

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { EDGES, NODES, STAGES, STRANDS, nextOf, nodeOf, pathOf, prereqsOf, type MapNode } from '@/lib/learning-map'
+import { unitHref } from '@/lib/curriculum'
 
 type Box = { x: number; y: number; w: number; h: number }
 
@@ -19,8 +20,8 @@ const GRID = 'grid grid-cols-[76px_repeat(6,minmax(0,1fr))] gap-x-9'
 
 export const countKey = (level: string, subject: string, unit: string) => `${level}|${subject}|${unit}`
 
-const resourcesHref = (x: MapNode) =>
-  `/resources?level=${x.level}&subject=${encodeURIComponent(x.subject)}&unit=${encodeURIComponent(x.unit)}`
+// 단원을 누르면 단원 페이지(자료·글·수학사·앞뒤 단원)로
+const resourcesHref = (x: MapNode) => unitHref(x.level, x.subject, x.unit)
 
 /**
  * 학습맵: 가로는 배우는 시기(중1 → 진로 선택), 세로는 영역.

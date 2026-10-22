@@ -6,7 +6,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { Gate } from '@/components/Gate'
 import { LearningMap, countKey } from '@/components/LearningMap'
 import { LoadError, Spinner } from '@/components/ui'
-import { SUBJECTS, UNIT_HINTS } from '@/lib/curriculum'
+import { SUBJECTS, UNIT_HINTS, unitHref } from '@/lib/curriculum'
 import { supabase } from '@/lib/supabase'
 import type { SchoolLevel } from '@/lib/types'
 
@@ -165,7 +165,7 @@ function SubjectCard({ level, subject, rows }: { level: SchoolLevel; subject: st
             const n = byUnit.get(u) ?? 0
             // 자료가 없는 단원은 누르면 게시판에 '자료 요청' 질문을 쓰게 한다
             const href = n
-              ? `${base}&unit=${encodeURIComponent(u)}`
+              ? unitHref(level, subject, u)
               : `/board/new?category=${encodeURIComponent('질문')}&title=${encodeURIComponent(`[${subject} · ${u}] 자료 요청`)}`
             return (
               <li key={u}>

@@ -14,7 +14,7 @@ import { Reactions } from '@/components/Reactions'
 import { ReportButton } from '@/components/ReportButton'
 import { ShareButton } from '@/components/ShareButton'
 import { Empty, LoadError, Spinner } from '@/components/ui'
-import { LEVEL_LABEL } from '@/lib/curriculum'
+import { LEVEL_LABEL, unitHref } from '@/lib/curriculum'
 import { embedOf } from '@/lib/embed'
 import { downloadFile, extOf, removeFiles } from '@/lib/files'
 import { fileSize, fullDate, koError } from '@/lib/format'
@@ -130,7 +130,7 @@ function Detail() {
           </Link>
           {r.unit && (
             <Link
-              href={`/resources?level=${r.school_level}&subject=${encodeURIComponent(r.subject)}&unit=${encodeURIComponent(r.unit)}`}
+              href={unitHref(r.school_level, r.subject, r.unit)}
               className="badge hover:bg-slate-200"
             >
               {r.unit}
