@@ -14,7 +14,7 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      // 안드로이드가 원·둥근 모양으로 잘라도 돼지가 남도록 그림을 안쪽으로 줄인 것
+      // 안드로이드가 원·둥근 모양으로 잘라도 얼굴이 남도록 그림을 안쪽으로 줄인 것
       { src: '/icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   }
