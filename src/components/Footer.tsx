@@ -21,6 +21,9 @@ export function Footer() {
           <a href={SITE.newsUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
             교육 뉴스 · Shrek Edu Insight ↗
           </a>
+          <a href={SITE.shrekMathUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
+            학생용 하루 한 문제 · ShrekMath ↗
+          </a>
         </nav>
       </div>
     </footer>

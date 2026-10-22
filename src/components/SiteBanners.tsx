@@ -3,6 +3,13 @@ import { SITE } from '@/lib/site'
 /** 첫 화면의 함께 보면 좋은 사이트 배너 */
 const SITES = [
   {
+    href: SITE.shrekMathUrl,
+    icon: '🎓',
+    name: 'ShrekMath',
+    desc: '학생용 하루 한 문제 · 풀이 사진 올리면 AI 첨삭',
+    className: 'from-brand-700 to-brand-500',
+  },
+  {
     href: SITE.newsUrl,
     icon: '📰',
     name: 'Shrek Edu Insight',
@@ -20,7 +27,7 @@ const SITES = [
 
 export function SiteBanners() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {SITES.map((s) => (
         <a
           key={s.href}

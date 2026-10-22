@@ -14,6 +14,7 @@ export default function LinksPage() {
         <section>
           <h2 className="mb-3 text-sm font-bold text-slate-500">📰 Shrek 사이트</h2>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <LinkCard name="ShrekMath" url={SITE.shrekMathUrl} desc="학생용 하루 한 문제 · 풀이 사진 올리면 AI 첨삭" />
             <LinkCard name="Shrek Edu Insight" url={SITE.newsUrl} desc="오늘의 수학, 수업이 되는 뉴스" />
             <LinkCard name="GreenSori Map" url={SITE.greensoriUrl} desc="그린소리가 담은 카페 · 공간 · 여행의 기록" />
           </div>

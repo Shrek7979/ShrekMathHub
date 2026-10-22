@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { isCorrect, problemOfDay, randomProblem, type Problem } from '@/lib/problems'
+import { SITE } from '@/lib/site'
 import { useAuth } from './AuthProvider'
 import { Markdown } from './Markdown'
 
@@ -174,6 +175,21 @@ export function DailyProblem() {
           </>
         )}
       </div>
+
+      {/* 학생용 짝 사이트: 같은 날, 학생들은 ShrekMath 에서 한 문제를 풀고 AI 첨삭을 받는다 */}
+      <a
+        href={SITE.shrekMathUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group flex items-center gap-3 border-t border-brand-100 bg-brand-50/60 px-4 py-2.5 text-sm hover:bg-brand-50 sm:px-5"
+      >
+        <span className="text-lg leading-none">🎓</span>
+        <span className="min-w-0 flex-1 leading-snug">
+          <b className="text-slate-900">ShrekMath</b>
+          <span className="text-slate-600"> — 학생들은 여기서 오늘의 문제를 풀어요. 풀이 사진을 올리면 AI가 채점·첨삭해요.</span>
+        </span>
+        <span className="shrink-0 font-semibold text-brand-700 transition group-hover:translate-x-0.5">바로 가기 ↗</span>
+      </a>
     </section>
   )
 }
