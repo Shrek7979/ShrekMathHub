@@ -195,12 +195,12 @@ function Unit() {
         <div className="space-y-8 lg:col-span-2">
           {stories.length > 0 && (
             <section>
-              <Head title="수업 시작 5분, 수학사" href={`/history?q=${encodeURIComponent(unit)}`} more="모아 보기 →" />
+              <Head title="수업 시작 5분, 수학사" href={`/history?tab=topics&q=${encodeURIComponent(unit)}`} more="모아 보기 →" />
               <ul className="space-y-2">
                 {stories.slice(0, 3).map((s) => (
                   <li key={s.id}>
                     <Link
-                      href={`/history?q=${encodeURIComponent(s.title)}`}
+                      href={`/history?tab=topics&q=${encodeURIComponent(s.title)}`}
                       className="card flex items-center gap-3 border-amber-200 px-3 py-2.5 hover:border-amber-300"
                     >
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-amber-50 p-1 text-amber-700">
