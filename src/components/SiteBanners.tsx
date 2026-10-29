@@ -17,6 +17,13 @@ const SITES = [
     className: 'from-slate-800 to-indigo-700',
   },
   {
+    href: SITE.killerShrekMathUrl,
+    icon: '🎯',
+    name: '킬러들의 수학몰',
+    desc: '수능 킬러 문항 분석 · 대학별 수리논술 · 일본 대학 입시 수학',
+    className: 'from-rose-700 to-orange-500',
+  },
+  {
     href: SITE.greensoriUrl,
     icon: '📍',
     name: 'GreenSori Map',
@@ -28,7 +35,7 @@ const SITES = [
 /** compact: 첫 화면 아래쪽에 작게 (양옆 패널에 이미 보이는 사이트라 크게 둘 필요가 없음) */
 export function SiteBanners({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`grid gap-3 sm:grid-cols-2 xl:grid-cols-3 ${compact ? 'gap-2' : ''}`}>
+    <div className={`grid sm:grid-cols-2 ${compact ? 'gap-2' : 'gap-3 xl:grid-cols-4'}`}>
       {SITES.map((s) => (
         <a
           key={s.href}

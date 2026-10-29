@@ -24,6 +24,9 @@ export function Footer() {
           <a href={SITE.shrekMathUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
             학생용 하루 한 문제 · ShrekMath ↗
           </a>
+          <a href={SITE.killerShrekMathUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
+            수능·논술 · 킬러들의 수학몰 ↗
+          </a>
         </nav>
       </div>
     </footer>
