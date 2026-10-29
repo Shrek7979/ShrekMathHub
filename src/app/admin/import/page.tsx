@@ -7,6 +7,7 @@ import { Gate } from '@/components/Gate'
 import { Empty, Spinner } from '@/components/ui'
 import { checkFile, removeFiles, uploadFile } from '@/lib/files'
 import { fileSize, koError } from '@/lib/format'
+import { SITE } from '@/lib/site'
 import { supabase } from '@/lib/supabase'
 import type { FileInfo } from '@/lib/types'
 
@@ -45,6 +46,13 @@ function Importer() {
   const [unavailable, setUnavailable] = useState(false)
   const [state, setState] = useState<Record<number, State>>({})
   const [running, setRunning] = useState(false)
+  const [usedBytes, setUsedBytes] = useState<number | null>(null)
+
+  useEffect(() => {
+    supabase.rpc('admin_stats').then(({ data }) => {
+      if (data && typeof data.storage_bytes === 'number') setUsedBytes(data.storage_bytes)
+    })
+  }, [])
 
   useEffect(() => {
     fetch('/api/dev-import')
@@ -68,6 +76,14 @@ function Importer() {
     set({ status: 'busy' })
     const uploaded: FileInfo[] = []
     try {
+      // 다른 브라우저에서 이미 올린 자료(같은 제목)는 다시 올리지 않는다
+      if (!it.replace_id) {
+        const { data: same } = await supabase.from('resources').select('id').eq('title', it.title).limit(1).maybeSingle()
+        if (same) {
+          set({ status: 'done', id: same.id, note: undefined })
+          return
+        }
+      }
       for (const [f, info] of it.files.entries()) {
         if (!info.exists) throw new Error(`파일이 없어요: ${info.name}`)
         const blob = await (await fetch(`/api/dev-import/file?i=${it.index}&f=${f}`)).blob()
@@ -142,6 +158,11 @@ function Importer() {
 
   const doneCount = items.filter((it) => state[it.index]?.status === 'done').length
   const total = items.reduce((s, it) => s + it.files.reduce((a, f) => a + f.size, 0), 0)
+  const pending = items
+    .filter((it) => state[it.index]?.status !== 'done')
+    .reduce((s, it) => s + it.files.reduce((a, f) => a + f.size, 0), 0)
+  const left = usedBytes === null ? null : SITE.storageLimitBytes - usedBytes
+  const tooBig = left !== null && pending > left
 
   return (
     <div>
@@ -151,6 +172,12 @@ function Importer() {
           <p className="mt-1 text-sm text-slate-500">
             {items.length}개 자료 · 파일 합계 {fileSize(total)} · 올린 것 {doneCount}개
           </p>
+          {left !== null && (
+            <p className={`mt-0.5 text-sm ${tooBig ? 'font-semibold text-red-600' : 'text-slate-500'}`}>
+              남은 자료 {fileSize(pending)} · 저장 공간 남은 양 {fileSize(Math.max(0, left))}
+              {tooBig && ' — 공간이 모자라요. 위에서부터 올리다 가득 차면 멈춰요.'}
+            </p>
+          )}
         </div>
         <button className="btn-primary" onClick={runAll} disabled={running || doneCount === items.length}>
           {running ? '올리는 중…' : doneCount === items.length ? '모두 올렸어요' : '남은 자료 모두 올리기'}
