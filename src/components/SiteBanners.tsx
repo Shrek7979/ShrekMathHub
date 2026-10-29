@@ -32,29 +32,42 @@ const SITES = [
   },
 ]
 
-/** compact: 첫 화면 아래쪽에 작게 (양옆 패널에 이미 보이는 사이트라 크게 둘 필요가 없음) */
+/** compact: 로그인 뒤 첫 화면 아래쪽에 작게 (양옆 패널에 이미 보이는 사이트라 크게 둘 필요가 없음) */
 export function SiteBanners({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`grid sm:grid-cols-2 ${compact ? 'gap-2' : 'gap-3 xl:grid-cols-4'}`}>
+    <div className={`grid grid-cols-2 ${compact ? 'gap-2 lg:grid-cols-4' : 'gap-3 lg:grid-cols-4'}`}>
       {SITES.map((s) => (
         <a
           key={s.href}
           href={s.href}
           target="_blank"
           rel="noopener noreferrer"
-          className={`group flex items-center rounded-xl bg-gradient-to-r text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-            compact ? 'gap-3 px-4 py-2.5' : 'gap-4 px-5 py-4'
+          title={`${s.name} — ${s.desc}`}
+          className={`group relative flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br text-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-lg ${
+            compact ? 'p-3.5' : 'p-4 sm:p-5'
           } ${s.className}`}
         >
-          <span className={`flex shrink-0 items-center justify-center rounded-lg bg-white/15 ${compact ? 'h-8 w-8 text-lg' : 'h-11 w-11 text-2xl'}`}>
-            {s.icon}
+          {/* 배경 장식 원 */}
+          <span className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
+          <span className="flex items-center justify-between">
+            <span
+              className={`flex items-center justify-center rounded-xl bg-white/20 ${
+                compact ? 'h-8 w-8 text-lg' : 'h-10 w-10 text-xl sm:h-11 sm:w-11 sm:text-2xl'
+              }`}
+            >
+              {s.icon}
+            </span>
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-sm font-bold transition group-hover:bg-white group-hover:text-slate-900">
+              ↗
+            </span>
           </span>
-          <span className="min-w-0 flex-1">
-            <span className={`block font-bold ${compact ? 'text-sm' : ''}`}>{s.name}</span>
-            <span className={`block leading-snug text-white/80 sm:truncate ${compact ? 'text-xs' : 'text-sm'}`}>{s.desc}</span>
+          <span className={`block truncate font-extrabold tracking-tight ${compact ? 'mt-2 text-[15px]' : 'mt-3 text-base sm:mt-4 sm:text-lg'}`}>
+            {s.name}
           </span>
-          <span className="shrink-0 text-sm font-semibold text-white/80 transition group-hover:translate-x-0.5 group-hover:text-white">
-            <span className="hidden sm:inline">바로 가기 </span>↗
+          <span
+            className={`mt-1 line-clamp-2 break-keep leading-snug text-white/85 ${compact ? 'text-xs' : 'text-[13px]'}`}
+          >
+            {s.desc}
           </span>
         </a>
       ))}
