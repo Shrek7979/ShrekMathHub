@@ -24,6 +24,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div aria-hidden className="h-1 bg-[linear-gradient(90deg,#10b981,#0ea5e9,#8b5cf6,#f43f5e,#f59e0b)]" />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:gap-x-6 lg:h-14 lg:py-0">
         <Logo />
         {isApproved && (

@@ -150,22 +150,37 @@ function Dashboard() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="page-title">{profile?.name} 선생님, 반가워요 👋</h1>
-          <TodayLine />
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-emerald-600 to-teal-500 px-5 py-6 text-white shadow-lg sm:px-7 sm:py-7">
+        <div aria-hidden className="hero-grid pointer-events-none absolute inset-0" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 select-none font-serif italic text-white/15">
+          <span className="absolute -right-2 -top-8 text-[120px] font-black not-italic leading-none">∑</span>
+          <span className="absolute right-36 top-3 text-4xl">π</span>
+          <span className="absolute bottom-3 right-10 text-3xl">∫</span>
+          <span className="absolute right-60 bottom-4 hidden text-2xl sm:block">x²+y²=r²</span>
+          <span className="absolute right-[45%] top-2 hidden text-2xl md:block">√2</span>
         </div>
-        <div className="flex gap-2">
-          <Link href="/resources/new" className="btn-primary">
-            + 자료 올리기
-          </Link>
-          <Link href="/board/new" className="btn-secondary">
-            글쓰기
-          </Link>
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="mb-2 inline-flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5">📚 수학 자료실</span>
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5">💬 선생님 커뮤니티</span>
+            </p>
+            <TodayLine />
+            <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-[28px]">{profile?.name} 선생님, 반가워요 👋</h1>
+          </div>
+          <div className="flex gap-2">
+            <Link href="/resources/new" className="btn bg-white text-brand-800 shadow-sm hover:bg-brand-50">
+              + 자료 올리기
+            </Link>
+            <Link href="/board/new" className="btn bg-white/15 text-white ring-1 ring-white/40 hover:bg-white/25">
+              글쓰기
+            </Link>
+          </div>
         </div>
-      </div>
+        <HubSearch />
+      </section>
 
-      <HubSearch />
+      <LibraryRooms />
 
       <WelcomeGuide />
 
@@ -192,12 +207,12 @@ function Dashboard() {
         <Spinner />
       ) : (
         <>
-          <div className="mt-10 grid gap-8 lg:grid-cols-5">
+          <div className="mt-8 grid gap-8 lg:grid-cols-5">
             <div className="space-y-8 lg:col-span-3">
               {data.featured.length > 0 && (
                 <section>
-                  <SectionHead title="허브 추천 자료" href="/resources?featured=1" />
-                  <ul className="card divide-y divide-slate-100 overflow-hidden">
+                  <SectionHead icon="⭐" tone="amber" title="허브 추천 자료" href="/resources?featured=1" />
+                  <ul className="card divide-y divide-slate-100 overflow-hidden border-t-4 border-t-amber-400">
                     {data.featured.map((r) => (
                       <ResourceItem key={r.id} r={r} compact />
                     ))}
@@ -207,6 +222,8 @@ function Dashboard() {
 
               <section>
                 <SectionHead
+                  icon="📂"
+                  tone="green"
                   title="새로 올라온 자료"
                   href="/resources"
                   badge={data.newSince ? `지난 방문 이후 ${data.newSince}개` : undefined}
@@ -214,7 +231,7 @@ function Dashboard() {
                 {data.recent.length === 0 ? (
                   <FirstOne href="/resources/new" text={isAdmin ? '첫 자료를 올려 허브를 열어 주세요!' : '아직 자료가 없어요. 첫 자료를 올려 주세요!'} />
                 ) : (
-                  <ul className="card divide-y divide-slate-100 overflow-hidden">
+                  <ul className="card divide-y divide-slate-100 overflow-hidden border-t-4 border-t-emerald-500">
                     {data.recent.map((r) => (
                       <ResourceItem key={r.id} r={r} compact />
                     ))}
@@ -223,13 +240,17 @@ function Dashboard() {
               </section>
 
               <section>
-                <SectionHead title={`${level === '중' ? '중학교' : '고등학교'} 과목별 자료`} href="/curriculum" more="교육과정 지도 →" />
-                <div className="card divide-y divide-slate-100 px-4">
-                  {SUBJECTS[level].map((g) => (
+                <SectionHead icon="🗺️" tone="sky" title={`${level === '중' ? '중학교' : '고등학교'} 과목별 자료`} href="/curriculum" more="교육과정 지도 →" />
+                <div className="card divide-y divide-slate-100 border-t-4 border-t-sky-400 px-4">
+                  {SUBJECTS[level].map((g, gi) => (
                     <div key={g.group} className="flex flex-wrap items-center gap-1.5 py-2.5">
-                      <span className="w-16 shrink-0 text-xs font-semibold text-slate-400">{g.group}</span>
+                      <span className="w-16 shrink-0 text-xs font-bold text-slate-500">{g.group}</span>
                       {g.items.map((s) => (
-                        <Link key={s} href={`/resources?level=${level}&subject=${encodeURIComponent(s)}`} className="chip py-0.5 text-xs">
+                        <Link
+                          key={s}
+                          href={`/resources?level=${level}&subject=${encodeURIComponent(s)}`}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition hover:-translate-y-px hover:shadow-sm ${GROUP_CHIP[gi % GROUP_CHIP.length]}`}
+                        >
                           {s}
                         </Link>
                       ))}
@@ -242,13 +263,17 @@ function Dashboard() {
             <div className="space-y-8 lg:col-span-2">
               {data.popular.length > 0 && (
                 <section>
-                  <SectionHead title="많이 받은 자료" href="/resources?sort=popular" />
-                  <ol className="card divide-y divide-slate-100 overflow-hidden text-sm">
+                  <SectionHead icon="🔥" tone="rose" title="많이 받은 자료" href="/resources?sort=popular" />
+                  <ol className="card divide-y divide-slate-100 overflow-hidden border-t-4 border-t-rose-400 text-sm">
                     {data.popular.map((r, i) => (
                       <li key={r.id}>
                         <Link href={`/resources/${r.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
-                          <span className="w-4 font-bold text-brand-600">{i + 1}</span>
-                          <span className="min-w-0 flex-1 truncate">{r.title}</span>
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${RANK_BADGE[i] ?? 'bg-slate-100 text-slate-500'}`}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-medium text-slate-800">{r.title}</span>
                           <span className="text-xs tabular-nums text-slate-500">⬇ {r.download_count}</span>
                         </Link>
                       </li>
@@ -258,8 +283,8 @@ function Dashboard() {
               )}
               {data.questions.length > 0 && (
                 <section>
-                  <SectionHead title="답을 기다리는 질문" href={`/board?category=${encodeURIComponent(QUESTION)}`} />
-                  <ul className="card divide-y divide-slate-100 overflow-hidden">
+                  <SectionHead icon="🙋" tone="violet" title="답을 기다리는 질문" href={`/board?category=${encodeURIComponent(QUESTION)}`} />
+                  <ul className="card divide-y divide-slate-100 overflow-hidden border-t-4 border-t-violet-400">
                     {data.questions.map((p) => (
                       <PostItem key={p.id} p={p} />
                     ))}
@@ -267,11 +292,11 @@ function Dashboard() {
                 </section>
               )}
               <section>
-                <SectionHead title="게시판 새 글" href="/board" />
+                <SectionHead icon="💬" tone="indigo" title="게시판 새 글" href="/board" />
                 {data.posts.length === 0 ? (
                   <FirstOne href="/board/new" text="첫 글을 남겨 주세요." />
                 ) : (
-                  <ul className="card divide-y divide-slate-100 overflow-hidden">
+                  <ul className="card divide-y divide-slate-100 overflow-hidden border-t-4 border-t-indigo-400">
                     {data.posts.map((p) => (
                       <PostItem key={p.id} p={p} />
                     ))}
@@ -282,22 +307,22 @@ function Dashboard() {
           </div>
 
           <section className="mt-10">
-            <SectionHead title="함께 보면 좋은 사이트" href="/links" more="링크 모음 →" />
+            <SectionHead icon="🔗" tone="teal" title="함께 보면 좋은 사이트" href="/links" more="링크 모음 →" />
             <SiteBanners compact />
           </section>
 
           <section className="mt-10">
-            <SectionHead title="수업 준비 바로가기" href="/links" more="링크 모음 →" />
+            <SectionHead icon="🧰" tone="orange" title="수업 준비 바로가기" href="/links" more="링크 모음 →" />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {LINK_GROUPS.flatMap((g) => g.links)
                 .slice(0, 8)
-                .map((l) => (
+                .map((l, i) => (
                   <a
                     key={l.url}
                     href={l.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="card truncate px-3 py-2.5 text-sm font-medium text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                    className={`truncate rounded-xl border-l-4 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-px hover:shadow ${LINK_EDGE[i % LINK_EDGE.length]}`}
                     title={l.desc}
                   >
                     {l.name} ↗
@@ -308,6 +333,35 @@ function Dashboard() {
         </>
       )}
     </div>
+  )
+}
+
+/** 허브의 네 '열람실' — 자료실·교육과정 지도·게시판·수학사로 바로 */
+const ROOMS = [
+  { href: '/resources', icon: '📚', sym: 'f(x)', title: '수학 자료실', desc: '학습지 · PPT · 평가 · GeoGebra', className: 'from-emerald-500 to-green-600' },
+  { href: '/curriculum', icon: '🗺️', sym: '→', title: '교육과정 지도', desc: '중1부터 진로 선택까지 단원별로', className: 'from-sky-500 to-blue-600' },
+  { href: '/board', icon: '💬', sym: '?', title: '선생님 게시판', desc: '질문 · 수업 나눔 · 평가 고민', className: 'from-violet-500 to-fuchsia-600' },
+  { href: '/history', icon: '📜', sym: 'π', title: '수학사 이야기', desc: '수업 시작 5분 이야깃거리', className: 'from-amber-400 to-orange-500' },
+]
+
+function LibraryRooms() {
+  return (
+    <nav aria-label="허브 바로가기" className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {ROOMS.map((r) => (
+        <Link
+          key={r.href}
+          href={r.href}
+          className={`group relative overflow-hidden rounded-xl bg-gradient-to-br px-4 py-3.5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${r.className}`}
+        >
+          <span aria-hidden className="absolute -bottom-3 right-1 select-none font-serif text-5xl italic text-white/20 transition group-hover:text-white/30">
+            {r.sym}
+          </span>
+          <span className="relative block text-xl">{r.icon}</span>
+          <b className="relative mt-1 block text-[15px]">{r.title}</b>
+          <span className="relative block truncate text-xs text-white/85">{r.desc}</span>
+        </Link>
+      ))}
+    </nav>
   )
 }
 
@@ -345,10 +399,10 @@ function WelcomeGuide() {
         </button>
       </div>
       <ul className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-4">
-        {steps.map(([icon, title, desc, href]) => (
+        {steps.map(([icon, title, desc, href], i) => (
           <li key={title}>
             <Link href={href} className="flex items-start gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-50" title={desc}>
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-base text-brand-700">{icon}</span>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base ${STEP_ICON[i % STEP_ICON.length]}`}>{icon}</span>
               <span className="min-w-0">
                 <b className="block text-sm text-slate-900">{title}</b>
                 <span className="line-clamp-2 text-xs leading-snug text-slate-500">{desc}</span>
@@ -367,7 +421,7 @@ const todayFmt = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric
 function TodayLine() {
   const [text, setText] = useState('')
   useEffect(() => setText(todayFmt.format(new Date())), [])
-  return <p className="mt-0.5 text-sm text-slate-500">{text || ' '}</p>
+  return <p className="text-sm font-medium text-white/80">{text || ' '}</p>
 }
 
 /** 첫 화면의 큰 찾기 칸 → /search */
@@ -380,30 +434,68 @@ function HubSearch() {
         e.preventDefault()
         if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`)
       }}
-      className="mt-4 flex gap-2"
+      className="relative mt-5 flex gap-2"
       role="search"
     >
       <input
-        className="input py-2.5 text-base"
+        className="input border-transparent py-2.5 text-base shadow-sm focus:border-white focus:ring-white/40"
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="무엇을 찾으세요? 예) 이차함수 활동지, 수행평가 루브릭"
         aria-label="자료·글 찾기"
       />
-      <button className="btn-primary shrink-0 px-5">찾기</button>
+      <button className="btn shrink-0 bg-amber-400 px-5 text-slate-900 hover:bg-amber-300">찾기</button>
     </form>
   )
 }
 
-function SectionHead({ title, href, more = '더 보기 →', badge }: { title: string; href: string; more?: string; badge?: string }) {
+// 구역마다 색을 달리해 눈으로 빨리 찾게 (Tailwind 가 읽도록 클래스 이름은 통째로 적는다)
+const TONE = {
+  green: 'bg-brand-100 text-brand-800',
+  amber: 'bg-amber-100 text-amber-700',
+  sky: 'bg-sky-100 text-sky-700',
+  rose: 'bg-rose-100 text-rose-700',
+  violet: 'bg-violet-100 text-violet-700',
+  indigo: 'bg-indigo-100 text-indigo-700',
+  teal: 'bg-teal-100 text-teal-700',
+  orange: 'bg-orange-100 text-orange-700',
+} as const
+const GROUP_CHIP = [
+  'bg-sky-50 text-sky-800 ring-sky-200 hover:bg-sky-100',
+  'bg-emerald-50 text-emerald-800 ring-emerald-200 hover:bg-emerald-100',
+  'bg-violet-50 text-violet-800 ring-violet-200 hover:bg-violet-100',
+  'bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100',
+  'bg-rose-50 text-rose-800 ring-rose-200 hover:bg-rose-100',
+  'bg-slate-50 text-slate-700 ring-slate-200 hover:bg-slate-100',
+]
+const RANK_BADGE = ['bg-amber-400 text-white', 'bg-slate-400 text-white', 'bg-orange-400 text-white']
+const LINK_EDGE = ['border-l-sky-400', 'border-l-emerald-400', 'border-l-violet-400', 'border-l-amber-400', 'border-l-rose-400', 'border-l-teal-400', 'border-l-indigo-400', 'border-l-orange-400']
+const STEP_ICON = ['bg-brand-100 text-brand-700', 'bg-sky-100 text-sky-700', 'bg-violet-100 text-violet-700', 'bg-amber-100 text-amber-700']
+
+function SectionHead({
+  title,
+  href,
+  more = '더 보기 →',
+  badge,
+  icon,
+  tone = 'green',
+}: {
+  title: string
+  href: string
+  more?: string
+  badge?: string
+  icon?: string
+  tone?: keyof typeof TONE
+}) {
   return (
-    <div className="mb-3 flex items-end justify-between gap-2 border-b border-slate-200 pb-2">
-      <h2 className="text-[15px] font-bold text-slate-900">
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h2 className="flex items-center gap-2 text-[17px] font-extrabold tracking-tight text-slate-900">
+        {icon && <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base ${TONE[tone]}`}>{icon}</span>}
         {title}
-        {badge && <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 align-middle text-[11px] font-bold text-white">{badge}</span>}
+        {badge && <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">{badge}</span>}
       </h2>
-      <Link href={href} className="text-sm text-slate-500 hover:text-brand-700">
+      <Link href={href} className="shrink-0 text-sm font-medium text-slate-500 hover:text-brand-700">
         {more}
       </Link>
     </div>

@@ -7,7 +7,7 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-slate-50 text-slate-800 antialiased;
+    @apply bg-[#f6f8f3] text-slate-800 antialiased;
     word-break: keep-all;
     overflow-wrap: anywhere;
   }
@@ -41,7 +41,7 @@
     @apply mb-1.5 block text-sm font-semibold text-slate-700;
   }
   .card {
-    @apply rounded-xl border border-slate-200 bg-white;
+    @apply rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)];
   }
   .chip {
     @apply inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-sm text-slate-600 transition hover:border-brand-400 hover:text-brand-700;
@@ -67,6 +67,14 @@
     linear-gradient(rgba(82, 123, 32, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(82, 123, 32, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* 첫 화면 머리 카드의 흰 모눈 (수학 공책 느낌) */
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 /* 가로로 넘기는 메뉴의 스크롤 막대 숨기기 */
