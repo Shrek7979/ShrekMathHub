@@ -1,4 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["icn1"]
+  "regions": ["icn1"],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "shrek-math-hub.vercel.app" }],
+      "destination": "https://shrekmath-hub.vercel.app/:path*",
+      "permanent": true
+    }
+  ]
 }
