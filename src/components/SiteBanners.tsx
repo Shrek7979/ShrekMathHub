@@ -24,6 +24,13 @@ const SITES = [
     className: 'from-rose-700 to-orange-500',
   },
   {
+    href: SITE.graphGameUrl,
+    icon: '📸',
+    name: '그래프 사진관',
+    desc: '식에 맞는 그래프를 찰칵! 중1~고1 함수 그래프 게임',
+    className: 'from-sky-600 to-violet-600',
+  },
+  {
     href: SITE.greensoriUrl,
     icon: '📍',
     name: 'GreenSori Map',
@@ -35,7 +42,7 @@ const SITES = [
 /** compact: 로그인 뒤 첫 화면 아래쪽에 작게 (양옆 패널에 이미 보이는 사이트라 크게 둘 필요가 없음) */
 export function SiteBanners({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`grid grid-cols-2 ${compact ? 'gap-2 lg:grid-cols-4' : 'gap-3 lg:grid-cols-4'}`}>
+    <div className={`grid grid-cols-2 ${compact ? 'gap-2 md:grid-cols-3 xl:grid-cols-5' : 'gap-3 md:grid-cols-3 xl:grid-cols-5'}`}>
       {SITES.map((s) => (
         <a
           key={s.href}
@@ -44,7 +51,7 @@ export function SiteBanners({ compact = false }: { compact?: boolean }) {
           rel="noopener noreferrer"
           title={`${s.name} — ${s.desc}`}
           className={`group relative flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br text-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-lg ${
-            compact ? 'p-3.5' : 'p-4 sm:p-5'
+            compact ? 'p-3.5' : 'p-4'
           } ${s.className}`}
         >
           {/* 배경 장식 원 */}
@@ -61,7 +68,7 @@ export function SiteBanners({ compact = false }: { compact?: boolean }) {
               ↗
             </span>
           </span>
-          <span className={`block truncate font-extrabold tracking-tight ${compact ? 'mt-2 text-[15px]' : 'mt-3 text-base sm:mt-4 sm:text-lg'}`}>
+          <span className={`block truncate font-extrabold tracking-tight ${compact ? 'mt-2 text-[15px]' : 'mt-3 text-base'}`}>
             {s.name}
           </span>
           <span
