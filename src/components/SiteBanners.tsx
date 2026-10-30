@@ -24,10 +24,10 @@ const SITES = [
     className: 'from-rose-700 to-orange-500',
   },
   {
-    href: SITE.graphGameUrl,
-    icon: '📸',
-    name: '그래프 사진관',
-    desc: '식에 맞는 그래프를 찰칵! 중1~고1 함수 그래프 게임',
+    href: SITE.gameUrl,
+    icon: '🎮',
+    name: 'ShrekMath Game',
+    desc: '수학게임 · 한 판 1분! 쉽고 짧은 중고등 수학 게임 모음',
     className: 'from-sky-600 to-violet-600',
   },
   {

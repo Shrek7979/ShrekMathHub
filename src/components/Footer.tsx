@@ -27,8 +27,8 @@ export function Footer() {
           <a href={SITE.killerShrekMathUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
             수능·논술 · 킬러들의 수학몰 ↗
           </a>
-          <a href={SITE.graphGameUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
-            함수 그래프 게임 · 그래프 사진관 ↗
+          <a href={SITE.gameUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
+            수학 게임 · ShrekMath Game ↗
           </a>
         </nav>
       </div>

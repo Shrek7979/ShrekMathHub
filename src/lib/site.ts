@@ -10,8 +10,8 @@ export const SITE = {
   greensoriUrl: 'https://greensori-map.vercel.app/',
   /** 킬러들의 수학몰 — 수능 킬러 문항 분석, 대학별 수리논술, 일본 대학 입시 수학 */
   killerShrekMathUrl: 'https://killershrekmath.vercel.app/',
-  /** 그래프 사진관 — 식에 맞는 그래프를 고르는 학생용 함수 그래프 게임 (중1~고1) */
-  graphGameUrl: 'https://math-arcade-eight.vercel.app/graph/',
+  /** ShrekMath Game — 한 판 1분짜리 중고등 수학 게임 모음 (징검다리·두더지·그래프 사진관 등) */
+  gameUrl: 'https://shrekmath-game.vercel.app/',
   /** 개인정보처리방침 등에 적는 문의처 (관리자 이메일) */
   contactEmail: 'heopx114@gmail.com',
   /** Supabase 무료 요금제 기준 (요금제를 바꾸면 고치기) */
