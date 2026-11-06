@@ -45,7 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <AuthProvider>
           <Header />
-          {/* 왼쪽: Shrek Edu Insight 수학 뉴스 (늘 보임), 가운데: 사이트 화면, 오른쪽: 학생용 ShrekMath (아주 넓은 화면) */}
+          {/* 왼쪽: Shrek Edu Insight 수학 뉴스 (늘 보임), 가운데: 사이트 화면, 오른쪽: 수학 게임·학생용 ShrekMath (아주 넓은 화면) */}
           <div className="flex w-full flex-1">
             <NewsPanel />
             <div className="flex min-w-0 flex-1 flex-col">

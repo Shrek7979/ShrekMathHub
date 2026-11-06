@@ -5,25 +5,62 @@ import { SITE } from '@/lib/site'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 
 const STORAGE_KEY = 'smh-shrekmath-panel'
+const TAB_KEY = 'smh-right-panel-tab'
+
+const TABS = [
+  {
+    key: 'game',
+    icon: '🎮',
+    label: '수학 게임',
+    desc: '한 판 1분! 쉽고 짧은 중고등 수학 게임',
+    url: SITE.gameUrl,
+    title: 'ShrekMath Game 수학 게임',
+  },
+  {
+    key: 'daily',
+    icon: '🎓',
+    label: '오늘의 문제',
+    desc: '학생용 오늘의 문제 · 풀이 사진 올리면 AI 첨삭',
+    url: SITE.shrekMathUrl,
+    title: 'ShrekMath 학생용 오늘의 문제',
+  },
+]
 
 /**
- * 아주 넓은 화면(1536px 이상)에서 오른쪽에 늘 떠 있는 학생용 "오늘의 문제" 사이트 ShrekMath (접기 가능).
+ * 아주 넓은 화면(1536px 이상)에서 오른쪽에 늘 떠 있는 패널 (접기 가능).
+ * 탭으로 ShrekMath Game 과 학생용 "오늘의 문제" 사이트 ShrekMath 를 오간다.
  * ShrekMath 쪽 next.config.mjs 의 frame-ancestors 에 이 허브 주소가 허용되어 있어야 보인다.
  */
 export function ShrekMathPanel() {
   const wide = useMediaQuery('(min-width: 1536px)')
   const [open, setOpen] = useState(true)
+  const [tab, setTab] = useState<string | null>(null)
+  // 한 번 연 탭은 그대로 두어, 탭을 오가도 게임이나 풀이가 처음으로 돌아가지 않게 한다
+  const [seen, setSeen] = useState<string[]>([])
 
   useEffect(() => {
+    let first = TABS[0].key
     try {
       if (localStorage.getItem(STORAGE_KEY) === 'closed') setOpen(false)
+      const saved = localStorage.getItem(TAB_KEY)
+      if (TABS.some((t) => t.key === saved)) first = saved as string
     } catch {}
+    setTab(first)
+    setSeen([first])
   }, [])
 
   function remember(next: boolean) {
     setOpen(next)
     try {
       localStorage.setItem(STORAGE_KEY, next ? 'open' : 'closed')
+    } catch {}
+  }
+
+  function pick(key: string) {
+    setTab(key)
+    setSeen((s) => (s.includes(key) ? s : [...s, key]))
+    try {
+      localStorage.setItem(TAB_KEY, key)
     } catch {}
   }
 
@@ -34,22 +71,35 @@ export function ShrekMathPanel() {
         onClick={() => remember(true)}
         className="fixed right-0 top-1/2 z-30 -translate-y-1/2 rounded-l-xl border border-r-0 border-brand-200 bg-white px-2 py-4 text-sm font-semibold text-brand-700 shadow-md hover:bg-brand-50 [writing-mode:vertical-rl]"
       >
-        🎓 ShrekMath 펼치기
+        🎮 수학 게임 · 오늘의 문제 펼치기
       </button>
     )
+  const current = TABS.find((t) => t.key === tab) ?? TABS[0]
   return (
     <aside className="sticky top-[61px] flex h-[calc(100vh-61px)] w-[360px] shrink-0 flex-col self-start border-l border-slate-200 bg-white 2xl:w-[378px]">
-      <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
-        <span className="text-lg leading-none">🎓</span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-900">ShrekMath</p>
-          <p className="text-[11px] text-slate-500">학생용 오늘의 문제 · 풀이 사진 올리면 AI 첨삭</p>
+      <div className="flex items-center gap-1 border-b border-slate-200 px-2 pt-2">
+        <div role="tablist" aria-label="오른쪽 패널" className="flex min-w-0 flex-1 gap-1">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={t.key === current.key}
+              onClick={() => pick(t.key)}
+              className={`-mb-px whitespace-nowrap rounded-t-lg border-b-2 px-2.5 py-1.5 text-sm font-bold ${
+                t.key === current.key
+                  ? 'border-brand-600 text-brand-700'
+                  : 'border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+              }`}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
         </div>
         <a
-          href={SITE.shrekMathUrl}
+          href={current.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-auto rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          className="rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800"
         >
           새 창 ↗
         </a>
@@ -57,14 +107,18 @@ export function ShrekMathPanel() {
           접기 ›
         </button>
       </div>
-      <iframe
-        src={SITE.shrekMathUrl}
-        title="ShrekMath 학생용 오늘의 문제"
-        // 로그인·풀이 사진 올리기가 되어야 하므로 스크립트·폼·카메라 허용, 이 화면 전체를 바꾸는 것은 막음
-        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads"
-        allow="camera"
-        className="w-full flex-1 border-0"
-      />
+      <p className="truncate border-b border-slate-200 px-3 py-1 text-[11px] text-slate-500">{current.desc}</p>
+      {TABS.filter((t) => seen.includes(t.key)).map((t) => (
+        <iframe
+          key={t.key}
+          src={t.url}
+          title={t.title}
+          // 로그인·풀이 사진 올리기가 되어야 하므로 스크립트·폼·카메라 허용, 이 화면 전체를 바꾸는 것은 막음
+          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads"
+          allow="camera"
+          className={`w-full flex-1 border-0 ${t.key === current.key ? '' : 'hidden'}`}
+        />
+      ))}
     </aside>
   )
 }
