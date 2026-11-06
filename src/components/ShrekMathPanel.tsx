@@ -15,6 +15,7 @@ const TABS = [
     desc: '한 판 1분! 쉽고 짧은 중고등 수학 게임',
     url: SITE.gameUrl,
     title: 'ShrekMath Game 수학 게임',
+    active: 'from-violet-600 to-fuchsia-500',
   },
   {
     key: 'daily',
@@ -23,6 +24,7 @@ const TABS = [
     desc: '학생용 오늘의 문제 · 풀이 사진 올리면 AI 첨삭',
     url: SITE.shrekMathUrl,
     title: 'ShrekMath 학생용 오늘의 문제',
+    active: 'from-brand-700 to-brand-500',
   },
 ]
 
@@ -81,37 +83,39 @@ export function ShrekMathPanel() {
   const current = TABS.find((t) => t.key === tab) ?? TABS[0]
   const body = (onClose: () => void, closeLabel: string) => (
     <>
-      <div className="flex items-center gap-1 border-b border-slate-200 px-2 pt-2">
-        <div role="tablist" aria-label="오른쪽 패널" className="flex min-w-0 flex-1 gap-1">
+      <div className="flex items-center gap-1.5 border-b border-slate-200 bg-slate-100 p-2">
+        <div role="tablist" aria-label="오른쪽 패널" className="flex min-w-0 flex-1 gap-1.5">
           {TABS.map((t) => (
             <button
               key={t.key}
               role="tab"
               aria-selected={t.key === current.key}
               onClick={() => pick(t.key)}
-              className={`-mb-px whitespace-nowrap rounded-t-lg border-b-2 px-2.5 py-1.5 text-sm font-bold ${
+              className={`flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-[15px] font-extrabold transition ${
                 t.key === current.key
-                  ? 'border-brand-600 text-brand-700'
-                  : 'border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                  ? `bg-gradient-to-r text-white shadow-md ${t.active}`
+                  : 'bg-white text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {t.icon} {t.label}
             </button>
           ))}
         </div>
+        <button onClick={onClose} className="whitespace-nowrap rounded-md px-1.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200">
+          {closeLabel}
+        </button>
+      </div>
+      <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-1.5">
+        <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-slate-700">{current.desc}</p>
         <a
           href={current.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="whitespace-nowrap rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          className="whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800"
         >
           새 창 ↗
         </a>
-        <button onClick={onClose} className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100">
-          {closeLabel}
-        </button>
       </div>
-      <p className="truncate border-b border-slate-200 px-3 py-1 text-[11px] text-slate-500">{current.desc}</p>
       {TABS.filter((t) => seen.includes(t.key)).map((t) => (
         <iframe
           key={t.key}
