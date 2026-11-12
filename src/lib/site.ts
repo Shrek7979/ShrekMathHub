@@ -12,6 +12,8 @@ export const SITE = {
   killerShrekMathUrl: 'https://killershrekmath.vercel.app/',
   /** ShrekMath Game — 한 판 1분짜리 중고등 수학 게임 모음 (징검다리·두더지·그래프 사진관 등) */
   gameUrl: 'https://shrekmath-game.vercel.app/',
+  /** Square Hunter — 합이 TARGET 이 되는 네모를 모두 세는 팀 대항 수학 게임 (진행 화면·학생 참가·혼자 하기) */
+  squareHuntUrl: 'https://square-hunt-dff11.web.app/',
   /** 개인정보처리방침 등에 적는 문의처 (관리자 이메일) */
   contactEmail: 'heopx114@gmail.com',
   /** Supabase 무료 요금제 기준 (요금제를 바꾸면 고치기) */

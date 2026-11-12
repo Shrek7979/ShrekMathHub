@@ -31,6 +31,13 @@ const SITES = [
     className: 'from-sky-600 to-violet-600',
   },
   {
+    href: SITE.squareHuntUrl,
+    icon: '🟧',
+    name: 'Square Hunter',
+    desc: '합이 TARGET이 되는 네모를 모두 찾는 팀 대항 수학 게임',
+    className: 'from-amber-500 to-orange-600',
+  },
+  {
     href: SITE.greensoriUrl,
     icon: '📍',
     name: 'GreenSori Map',
@@ -42,7 +49,7 @@ const SITES = [
 /** compact: 로그인 뒤 첫 화면 아래쪽에 작게 (양옆 패널에 이미 보이는 사이트라 크게 둘 필요가 없음) */
 export function SiteBanners({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`grid grid-cols-2 ${compact ? 'gap-2 md:grid-cols-3 xl:grid-cols-5' : 'gap-3 md:grid-cols-3 xl:grid-cols-5'}`}>
+    <div className={`grid grid-cols-2 ${compact ? 'gap-2 md:grid-cols-3' : 'gap-3 md:grid-cols-3'}`}>
       {SITES.map((s) => (
         <a
           key={s.href}

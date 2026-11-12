@@ -18,6 +18,7 @@ export default function LinksPage() {
             <LinkCard name="Shrek Edu Insight" url={SITE.newsUrl} desc="오늘의 수학, 수업이 되는 뉴스" />
             <LinkCard name="킬러들의 수학몰" url={SITE.killerShrekMathUrl} desc="수능 킬러 문항 분석 · 대학별 수리논술 · 일본 대학 입시 수학" />
             <LinkCard name="ShrekMath Game" url={SITE.gameUrl} desc="한 판 1분! 쉽고 짧은 중고등 수학 게임 20여 종 (징검다리·두더지·그래프 사진관 등)" />
+            <LinkCard name="Square Hunter" url={SITE.squareHuntUrl} desc="합이 TARGET이 되는 네모를 모두 찾는 팀 대항 수학 게임 (진행 화면 · 학생 참가 · 혼자 하기)" />
             <LinkCard name="GreenSori Map" url={SITE.greensoriUrl} desc="그린소리가 담은 카페 · 공간 · 여행의 기록" />
           </div>
         </section>
