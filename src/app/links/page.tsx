@@ -19,6 +19,8 @@ export default function LinksPage() {
             <LinkCard name="킬러들의 수학몰" url={SITE.killerShrekMathUrl} desc="수능 킬러 문항 분석 · 대학별 수리논술 · 일본 대학 입시 수학" />
             <LinkCard name="ShrekMath Game" url={SITE.gameUrl} desc="한 판 1분! 쉽고 짧은 중고등 수학 게임 20여 종 (징검다리·두더지·그래프 사진관 등)" />
             <LinkCard name="Square Hunter" url={SITE.squareHuntUrl} desc="합이 TARGET이 되는 네모를 모두 찾는 팀 대항 수학 게임 (진행 화면 · 학생 참가 · 혼자 하기)" />
+            <LinkCard name="제로팡" url={SITE.zeroPangUrl} desc="이웃한 숫자 블록을 이어 합이 0이 되면 팡! 1분 정수 덧셈 퍼즐 (쉬움~영재)" />
+            <LinkCard name="더지팡팡" url={SITE.dujiPangPangUrl} desc="맞는 두더지만 골라서 팡! 저학년부터 고등까지 즐기는 레이싱 수학 게임" />
             <LinkCard name="GreenSori Map" url={SITE.greensoriUrl} desc="그린소리가 담은 카페 · 공간 · 여행의 기록" />
           </div>
         </section>

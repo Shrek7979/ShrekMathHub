@@ -14,6 +14,10 @@ export const SITE = {
   gameUrl: 'https://shrekmath-game.vercel.app/',
   /** Square Hunter — 합이 TARGET 이 되는 네모를 모두 세는 팀 대항 수학 게임 (진행 화면·학생 참가·혼자 하기) */
   squareHuntUrl: 'https://square-hunt-dff11.web.app/',
+  /** 제로팡 — 이웃한 숫자 블록을 이어 합이 0 이 되면 터지는 1분 정수 덧셈 퍼즐 */
+  zeroPangUrl: 'https://zeropang.web.app/',
+  /** 더지팡팡 — 조건에 맞는 두더지만 잡는 레이싱 수학 게임 (저학년~고등) */
+  dujiPangPangUrl: 'https://dujipangpang.vercel.app/',
   /** 개인정보처리방침 등에 적는 문의처 (관리자 이메일) */
   contactEmail: 'heopx114@gmail.com',
   /** Supabase 무료 요금제 기준 (요금제를 바꾸면 고치기) */

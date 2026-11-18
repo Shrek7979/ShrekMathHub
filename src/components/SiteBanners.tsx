@@ -1,11 +1,13 @@
 import Image, { type StaticImageData } from 'next/image'
 import { SITE } from '@/lib/site'
 import dailyShot from '@/assets/sites/daily.jpg'
+import dujiShot from '@/assets/sites/duji.jpg'
 import gameShot from '@/assets/sites/game.jpg'
 import greensoriShot from '@/assets/sites/greensori.jpg'
 import killerShot from '@/assets/sites/killer.jpg'
 import newsShot from '@/assets/sites/news.jpg'
 import squareShot from '@/assets/sites/square.jpg'
+import zeropangShot from '@/assets/sites/zeropang.jpg'
 
 type Site = { href: string; icon: string; name: string; desc: string; shot: StaticImageData; className: string }
 
@@ -39,6 +41,15 @@ const SITES: Site[] = [
     className: 'from-rose-700 to-orange-500',
   },
   {
+    href: SITE.greensoriUrl,
+    icon: '📍',
+    name: 'GreenSori Map',
+    desc: '그린소리가 담은 카페 · 공간 · 여행의 기록',
+    shot: greensoriShot,
+    className: 'from-emerald-600 to-teal-500',
+  },
+  // ↓ 수학 게임
+  {
     href: SITE.gameUrl,
     icon: '🎮',
     name: 'ShrekMath Game',
@@ -55,19 +66,27 @@ const SITES: Site[] = [
     className: 'from-slate-900 to-amber-700',
   },
   {
-    href: SITE.greensoriUrl,
-    icon: '📍',
-    name: 'GreenSori Map',
-    desc: '그린소리가 담은 카페 · 공간 · 여행의 기록',
-    shot: greensoriShot,
-    className: 'from-emerald-600 to-teal-500',
+    href: SITE.zeroPangUrl,
+    icon: '🍬',
+    name: '제로팡',
+    desc: '이웃한 숫자 블록을 이어 합이 0이 되면 팡! 1분 정수 덧셈 퍼즐',
+    shot: zeropangShot,
+    className: 'from-pink-500 to-violet-500',
+  },
+  {
+    href: SITE.dujiPangPangUrl,
+    icon: '🏁',
+    name: '더지팡팡',
+    desc: '맞는 두더지만 골라서 팡! 저학년부터 고등까지 레이싱 수학 게임',
+    shot: dujiShot,
+    className: 'from-red-600 to-amber-500',
   },
 ]
 
 /** compact: 로그인 뒤 첫 화면 아래쪽에 조금 작게 */
 export function SiteBanners({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`grid grid-cols-2 md:grid-cols-3 ${compact ? 'gap-2.5' : 'gap-3 sm:gap-4'}`}>
+    <div className={`grid grid-cols-2 md:grid-cols-4 ${compact ? 'gap-2.5' : 'gap-3'}`}>
       {SITES.map((s) => (
         <a
           key={s.href}
@@ -83,34 +102,23 @@ export function SiteBanners({ compact = false }: { compact?: boolean }) {
               src={s.shot}
               alt={`${s.name} 첫 화면`}
               fill
-              sizes="(min-width: 768px) 33vw, 50vw"
+              sizes="(min-width: 768px) 25vw, 50vw"
               placeholder="blur"
               className="object-cover object-top transition duration-500 group-hover:scale-105"
             />
             <span className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/45 to-transparent" />
-            <span className="absolute left-2 top-2 hidden max-w-[75%] truncate rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur sm:block">
-              {new URL(s.href).host}
-            </span>
             <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-sm font-bold text-slate-800 shadow transition group-hover:bg-slate-900 group-hover:text-white">
               ↗
             </span>
-          </span>
-          <span className={`flex flex-1 items-start gap-2.5 bg-gradient-to-r text-white ${compact ? 'p-2.5' : 'p-3 sm:p-3.5'} ${s.className}`}>
-            <span
-              // 휴대폰의 두 줄 배치에서는 이름이 잘리지 않게 아이콘을 뺀다
-              className={`hidden shrink-0 items-center justify-center rounded-lg bg-white/20 sm:flex ${
-                compact ? 'h-8 w-8 text-base' : 'h-9 w-9 text-lg sm:h-10 sm:w-10 sm:text-xl'
-              }`}
-            >
+            {/* 아이콘은 사진 아래 모서리에 얹어 이름 칸을 넓게 쓴다 */}
+            <span className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-lg shadow">
               {s.icon}
             </span>
-            <span className="min-w-0">
-              <span className={`block truncate font-extrabold tracking-tight ${compact ? 'text-sm' : 'text-[15px] sm:text-base'}`}>
-                {s.name}
-              </span>
-              <span className={`mt-0.5 line-clamp-2 break-keep leading-snug text-white/85 ${compact ? 'text-[11px]' : 'text-xs sm:text-[13px]'}`}>
-                {s.desc}
-              </span>
+          </span>
+          <span className={`flex flex-1 flex-col bg-gradient-to-r text-white ${compact ? 'p-2.5' : 'p-3'} ${s.className}`}>
+            <span className={`block truncate font-extrabold tracking-tight ${compact ? 'text-sm' : 'text-[15px]'}`}>{s.name}</span>
+            <span className={`mt-0.5 line-clamp-2 break-keep leading-snug text-white/85 ${compact ? 'text-[11px]' : 'text-xs'}`}>
+              {s.desc}
             </span>
           </span>
         </a>
