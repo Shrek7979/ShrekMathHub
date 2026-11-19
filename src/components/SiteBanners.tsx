@@ -8,6 +8,7 @@ import killerShot from '@/assets/sites/killer.jpg'
 import newsShot from '@/assets/sites/news.jpg'
 import squareShot from '@/assets/sites/square.jpg'
 import zeropangShot from '@/assets/sites/zeropang.jpg'
+import atelierShot from '@/assets/sites/atelier.jpg'
 
 type Site = { href: string; icon: string; name: string; desc: string; shot: StaticImageData; className: string }
 
@@ -81,12 +82,20 @@ const SITES: Site[] = [
     shot: dujiShot,
     className: 'from-red-600 to-amber-500',
   },
+  {
+    href: SITE.mathAtelierUrl,
+    icon: '🎨',
+    name: '수학 아틀리에',
+    desc: '중1~3 개념별 게임 41개 · 두뇌 챌린지 랭킹전과 2인 대결',
+    shot: atelierShot,
+    className: 'from-emerald-800 to-amber-600',
+  },
 ]
 
 /** compact: 로그인 뒤 첫 화면 아래쪽에 조금 작게 */
 export function SiteBanners({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`grid grid-cols-2 md:grid-cols-4 ${compact ? 'gap-2.5' : 'gap-3'}`}>
+    <div className={`grid grid-cols-2 md:grid-cols-3 ${compact ? 'gap-2.5' : 'gap-3'}`}>
       {SITES.map((s) => (
         <a
           key={s.href}
@@ -102,7 +111,7 @@ export function SiteBanners({ compact = false }: { compact?: boolean }) {
               src={s.shot}
               alt={`${s.name} 첫 화면`}
               fill
-              sizes="(min-width: 768px) 25vw, 50vw"
+              sizes="(min-width: 768px) 33vw, 50vw"
               placeholder="blur"
               className="object-cover object-top transition duration-500 group-hover:scale-105"
             />
