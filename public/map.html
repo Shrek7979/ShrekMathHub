@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#1f6b4a">
+<link rel="manifest" href="/map.webmanifest">
+<link rel="icon" href="/map-icon-192.png">
+<link rel="apple-touch-icon" href="/map-apple-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="프로젝트 지도">
+<title>내 프로젝트 지도</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 홈 화면용 런처. 맨 위 Claude 프로젝트 버튼 → 자주(카드) → 가끔(카드). 폰에서도 한 줄 2개 */
+:root{
+  --bg:#eef2ef; --card:#ffffff; --fg:#111816; --muted:#46524d; --line:#cfd8d3;
+  --accent:#1f6b4a; --accent-fg:#ffffff; --accent-soft:#dcefe4;
+  --claude:#c2552f; --claude-fg:#ffffff;
+  --vercel:#111816; --vercel-fg:#fff; --fb:#f3a81f; --fb-fg:#2a1d00; --gh:#4d3fb0; --gh-fg:#fff; --none:#e1e7e3; --none-fg:#36423d;
+  --warn:#9a4a05;
+  --sans:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1412; --card:#1a211e; --fg:#f2f6f4; --muted:#b4c1bb; --line:#33403a;
+  --accent:#7fd6aa; --accent-fg:#0f1412; --accent-soft:#1f3a2d;
+  --claude:#e2774f; --claude-fg:#160904;
+  --vercel:#f2f6f4; --vercel-fg:#0f1412; --fb:#f3b13f; --fb-fg:#2a1d00; --gh:#a99cf5; --gh-fg:#0f1412; --none:#2a332f; --none-fg:#c9d4cf;
+  --warn:#f5ad6b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1412; --card:#1a211e; --fg:#f2f6f4; --muted:#b4c1bb; --line:#33403a;
+  --accent:#7fd6aa; --accent-fg:#0f1412; --accent-soft:#1f3a2d;
+  --claude:#e2774f; --claude-fg:#160904;
+  --vercel:#f2f6f4; --vercel-fg:#0f1412; --fb:#f3b13f; --fb-fg:#2a1d00; --gh:#a99cf5; --gh-fg:#0f1412; --none:#2a332f; --none-fg:#c9d4cf;
+  --warn:#f5ad6b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:1100px;margin:0 auto;padding-block:18px 48px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:12px}
+.titlerow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+h1{font-size:1.7rem;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:.85rem;margin:0}
+a.home{display:flex;align-items:center;justify-content:center;gap:10px;min-height:60px;padding:12px 18px;border-radius:14px;background:var(--claude);color:var(--claude-fg);font-weight:700;font-size:1.15rem;text-decoration:none}
+a.home small{font-weight:500;font-size:.8rem;opacity:.9}
+a.home:focus-visible,.btn:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+input[type=search]{font:inherit;font-size:1rem;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);width:100%}
+input[type=search]:focus{outline:none;border-color:var(--accent)}
+section{display:flex;flex-direction:column;gap:12px}
+h2{font-size:1.25rem;margin:0;display:flex;gap:10px;align-items:baseline}
+h2 span{font-size:.9rem;font-weight:500;color:var(--muted)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.often .card{border-width:2px}
+.name{font-weight:700;font-size:1.1rem;line-height:1.3;margin:0;word-break:keep-all;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.date{font-family:var(--mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.date.hot{color:var(--accent);font-weight:500}
+.b{font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:6px}
+.b.vercel{background:var(--vercel);color:var(--vercel-fg)}
+.b.firebase{background:var(--fb);color:var(--fb-fg)}
+.b.pages{background:var(--gh);color:var(--gh-fg)}
+.b.none{background:var(--none);color:var(--none-fg)}
+.b.auto{background:var(--accent-soft);color:var(--accent)}
+.b.wait{background:var(--none);color:var(--warn)}
+.note{font-size:.9rem;color:var(--muted);margin:0;overflow-wrap:anywhere}
+.actions{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:8px 10px;border-radius:10px;font:inherit;font-size:1rem;font-weight:700;text-decoration:none;cursor:pointer;border:0;text-align:center}
+.btn.open{background:var(--accent);color:var(--accent-fg)}
+.btn.ai{background:transparent;color:var(--claude);border:2px solid var(--claude)}
+.btn.ai.done{background:var(--claude);color:var(--claude-fg)}
+.btn .sm{display:none}
+.addr{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.addr-label{font-size:.85rem;color:var(--muted);font-weight:500}
+#paddr{flex:1 1 200px;min-width:0;font-size:.85rem;overflow-wrap:anywhere;user-select:all;-webkit-user-select:all;color:var(--fg)}
+.btn.copy{background:var(--fg);color:var(--bg);min-height:40px;padding:6px 14px;font-size:.9rem}
+@media (max-width:600px){.btn .lg{display:none}.btn .sm{display:inline}}
+details{font-size:.85rem;color:var(--muted)}
+summary{cursor:pointer;padding:4px 0;font-weight:500}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;margin:6px 0 0}
+dt{color:var(--muted)} dd{margin:0;color:var(--fg);overflow-wrap:anywhere}
+dd a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.8rem}
+.q{color:var(--warn);font-weight:700}
+.empty{color:var(--muted)}
+footer{color:var(--muted);font-size:.85rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:.95rem;font-weight:500;max-width:calc(100% - 32px);text-align:center;z-index:20}
+@media (max-width:600px){
+  body{font-size:16px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card{padding:12px;gap:8px;border-radius:12px}
+  .name{font-size:1.02rem}
+  .note{display:none}
+  .btn{font-size:.95rem;min-height:44px}
+  h1{font-size:1.45rem}
+}
+@media (prefers-reduced-motion:no-preference){.btn,a.home{transition:transform .1s}.btn:active,a.home:active{transform:scale(.97)}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="titlerow">
+      <h1>내 프로젝트 지도</h1>
+      <p class="sub">2026-11-20 기준</p>
+    </div>
+    <a class="home" href="https://claude.ai/code/project/chan_018MiQZ1twQzivCxKKeTNFuQ" target="_blank" rel="noopener">내 Claude 프로젝트 열기 ↗</a>
+    <p class="hint">카드의 <b>Claude 이어하기</b>를 누르면 "○○ 이어서 작업해줘" 문장이 복사되고 Claude 프로젝트가 열려요. 채팅창에 붙여넣기만 하면 돼요.</p>
+    <input type="search" id="q" placeholder="이름·주소로 찾기" aria-label="프로젝트 검색">
+  </header>
+
+  <section class="often">
+    <h2>자주 <span>바로 여는 곳</span></h2>
+    <div class="grid" id="often"></div>
+  </section>
+
+  <section>
+    <h2>가끔 <span>필요할 때</span></h2>
+    <div class="grid" id="sometimes"></div>
+  </section>
+
+  <p class="empty" id="none" hidden>찾는 프로젝트가 없어요.</p>
+  <footer>주황색 <span class="q">?</span>는 아직 확인하지 못한 정보예요. 폰 브라우저 메뉴의 "홈 화면에 추가"를 누르면 앱처럼 열 수 있어요.</footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const PROJECT='https://claude.ai/code/project/chan_018MiQZ1twQzivCxKKeTNFuQ';
+const GH='https://github.com/Shrek7979/';
+const often=[
+ {n:'ShrekMath Hub',u:'https://shrekmath-hub.vercel.app',d:'11-20',h:'vercel',r:'ShrekMathHub',note:'링크·배너 추가가 가장 잦음'},
+ {n:'킬러 ShrekMath',u:'https://killershrekmath.vercel.app',d:'11-20',h:'vercel',r:'killer_ShrekMath',note:'하루 한 문제, 365문제 일정'},
+ {n:'루키 ShrekMath',u:'https://rookieshrekmath.vercel.app',d:'11-20',h:'vercel',r:'rookie_ShrekMath',note:'킬러의 입문 버전(추정)'},
+ {n:'수학 게임 모음',u:'https://shrekmath-game.vercel.app',d:'11-19',h:'vercel',r:'math-arcade ?',note:'파동 맞추기·접선 서핑 등'},
+ {n:'더지팡팡',u:'',d:'11-17',h:'vercel',r:'Shrek7979.github.io ?',note:'두더지 잡기 게임'},
+ {n:'Square Hunt · 제로팡',u:'https://zeropang.web.app',d:'11-17',h:'firebase',note:'카톡 미리보기는 카카오 공유 디버거로 갱신'},
+ {n:'수업·평가 자료',u:'',d:'11-19',h:'none',note:'수리논술, 수업계획안, 결과보고서, 500제'},
+];
+const sometimes=[
+ {n:'그린소리 맵',u:'https://greensori-map.vercel.app',d:'11-18',h:'vercel',r:'shrek7979-greensori-map',auto:'매일 10시 자동'},
+ {n:'개항장 도슨트',u:'https://gaehang-docent.vercel.app',d:'11-17',h:'vercel'},
+ {n:'모의면접 연습',u:'https://mock-interview-practice-tau.vercel.app',d:'11-15',h:'vercel',note:'로그인 없이 열림'},
+ {n:'바이브 학습지',u:'https://vibe-worksheet-six.vercel.app',d:'11-10',h:'vercel',r:'vibe-worksheet'},
+ {n:'자기소개 템플릿',u:'https://heoseok-profile.vercel.app',d:'11-06',h:'vercel',r:'profile-template',note:'Git + Vercel 연수 자료'},
+ {n:'e 테스터 교실',u:'https://shrek7979.github.io/e-tester-classroom/',d:'10-23',h:'pages',r:'e-tester-classroom',note:'자연상수 e 확률 실험실'},
+ {n:'ShrekMathNews',u:'https://shrek7979.github.io/ShrekMathNews/',d:'10-08',h:'pages',r:'ShrekMathNews'},
+ {n:'AI수학체험센터 발표',d:'11-19',h:'none',note:'발표자료 HTML 파일'},
+ {n:'3분 챌린지 랭킹',d:'11-19',h:'',note:'난이도별 TOP 10'},
+ {n:'ShrekEduInsight',d:'11-20',h:'',r:'ShrekEduInsight',note:'용도 확인 필요'},
+ {n:'2022 교육과정 검토',d:'11-09',h:'none',note:'1109_21쪽.hwpx'},
+ {n:'인천교육청 정책 발표',d:'11-06',h:'none',note:'지도 슬라이드 반영'},
+ {n:'논서술형 평가 연수',d:'11-02',h:'',wait:'답변 대기',note:'클릭 안 되는 쪽 알려주기'},
+ {n:'GPTers 주간 AI 소식',d:'11-02',h:'none',auto:'매주 월 7시',note:'카톡 대화 주 1회 내보내기'},
+ {n:'수능 귀가시간 · 면접 후기',d:'',h:'',note:'면접 후기 정리 11-17 보관'},
+];
+const HOST={vercel:'Vercel',firebase:'Firebase',pages:'GitHub Pages',none:'파일'};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const q=v=>v?esc(v).replace(/ \?$/,' <span class="q">?</span>'):'<span class="q">?</span>';
+const all=[...often,...sometimes];
+function card(p,i){
+  const host=p.h;
+  const badges=[host?`<span class="b ${host}">${HOST[host]}</span>`:'',p.auto?`<span class="b auto">${esc(p.auto)}</span>`:'',p.wait?`<span class="b wait">${esc(p.wait)}</span>`:''].join('');
+  const open=p.u?`<a class="btn open" href="${esc(p.u)}" target="_blank" rel="noopener">사이트 열기 ↗</a>`:'';
+  const repo=p.r?(p.r.endsWith('?')?q(p.r):`<a href="${GH}${esc(p.r)}" target="_blank" rel="noopener">${esc(p.r)}</a>`):q('');
+  const site=p.u?`<a href="${esc(p.u)}" target="_blank" rel="noopener">${esc(p.u.replace(/^https:\/\//,'').replace(/\/$/,''))}</a>`:(p.h==='none'?'없음 (파일)':q(''));
+  const hot=p.d&&p.d>='11-17';
+  return `<article class="card" data-k="${esc((p.n+' '+(p.u||'')+' '+(p.note||'')+' '+(p.r||'')).toLowerCase())}">
+    <h3 class="name">${esc(p.n)}</h3>
+    <div class="meta"><span class="date${hot?' hot':''}">${p.d?esc(p.d):'—'}</span>${badges}</div>
+    ${p.note?`<p class="note">${esc(p.note)}</p>`:''}
+    <div class="actions">${open}<a class="btn ai" href="${PROJECT}" target="_blank" rel="noopener" data-i="${i}"><span class="lg">Claude로 이어하기 ↗</span><span class="sm">Claude ↗</span></a></div>
+    <details><summary>세부</summary><dl>
+      <dt>주소</dt><dd>${site}</dd>
+      <dt>GitHub</dt><dd>${repo}</dd>
+      ${p.note?`<dt>메모</dt><dd>${esc(p.note)}</dd>`:''}
+    </dl></details>
+  </article>`;
+}
+document.getElementById('often').innerHTML=often.map((p,i)=>card(p,i)).join('');
+document.getElementById('sometimes').innerHTML=sometimes.map((p,i)=>card(p,i+often.length)).join('');
+
+const toast=document.getElementById('toast');let tt;
+function show(msg){toast.textContent=msg;toast.hidden=false;clearTimeout(tt);tt=setTimeout(()=>toast.hidden=true,2600);}
+function copy(text,ok,fail){
+  try{navigator.clipboard.writeText(text).then(ok,fail);}catch(_){fail();}
+}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('.btn.ai');if(!a)return;
+  const p=all[+a.dataset.i];
+  const text=`${p.n} 이어서 작업해줘`;
+  copy(text,()=>{show(`"${text}" 복사됨. 채팅창에 붙여넣으세요`);a.classList.add('done');},()=>show(`프로젝트에서 "${text}"라고 입력하세요`));
+});
+const input=document.getElementById('q');
+input.addEventListener('input',()=>{
+  const t=input.value.trim().toLowerCase();let shown=0;
+  document.querySelectorAll('.card').forEach(c=>{const ok=!t||c.dataset.k.includes(t);c.hidden=!ok;if(ok)shown++;});
+  document.querySelectorAll('section').forEach(s=>{s.hidden=![...s.querySelectorAll('.card')].some(c=>!c.hidden);});
+  document.getElementById('none').hidden=shown>0;
+});
+</script>
+
+</body>
+</html>
