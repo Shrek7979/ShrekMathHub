@@ -22,6 +22,7 @@ export default function LinksPage() {
             <LinkCard name="제로팡" url={SITE.zeroPangUrl} desc="이웃한 숫자 블록을 이어 합이 0이 되면 팡! 1분 정수 덧셈 퍼즐 (쉬움~영재)" />
             <LinkCard name="더지팡팡" url={SITE.dujiPangPangUrl} desc="맞는 두더지만 골라서 팡! 저학년부터 고등까지 즐기는 레이싱 수학 게임" />
             <LinkCard name="수학 아틀리에" url={SITE.mathAtelierUrl} desc="중1~3 교과 개념별 게임과 학년 무관 두뇌 챌린지(랭킹전 · 2인 대결)를 모은 게임 도서관" />
+            <LinkCard name="엠버 슬라이드" url={SITE.emberSlideUrl} desc="판을 밀어 같은 종류의 항끼리 합치는 중1 동류항 · 일차식 계산 퍼즐 (12라운드)" />
             <LinkCard name="GreenSori Map" url={SITE.greensoriUrl} desc="그린소리가 담은 카페 · 공간 · 여행의 기록" />
           </div>
         </section>

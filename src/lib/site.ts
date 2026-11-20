@@ -20,6 +20,8 @@ export const SITE = {
   dujiPangPangUrl: 'https://dujipangpang.vercel.app/',
   /** 수학 아틀리에 — 중1~3 교과 개념별 게임과 학년 무관 두뇌 챌린지를 모은 게임 도서관 */
   mathAtelierUrl: 'https://math-game-arcade.vercel.app/',
+  /** 엠버 슬라이드 — 판을 밀어 동류항을 합치는 중1 일차식 퍼즐 (12라운드) */
+  emberSlideUrl: 'https://ember-slide.vercel.app/',
   /** 개인정보처리방침 등에 적는 문의처 (관리자 이메일) */
   contactEmail: 'heopx114@gmail.com',
   /** Supabase 무료 요금제 기준 (요금제를 바꾸면 고치기) */
