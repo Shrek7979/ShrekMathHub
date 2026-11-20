@@ -10,6 +10,8 @@ export const SITE = {
   greensoriUrl: 'https://greensori-map.vercel.app/',
   /** 킬러들의 수학몰 — 수능 킬러 문항 분석, 대학별 수리논술, 일본 대학 입시 수학 */
   killerShrekMathUrl: 'https://killershrekmath.vercel.app/',
+  /** 루키들의 수학몰 — 고1·고3 학력평가와 평가원 기출 2~3점 문항을 시험처럼 풀고 바로 채점 */
+  rookieShrekMathUrl: 'https://rookieshrekmath.vercel.app/',
   /** ShrekMath Game — 한 판 1분짜리 중고등 수학 게임 모음 (징검다리·두더지·그래프 사진관 등) */
   gameUrl: 'https://shrekmath-game.vercel.app/',
   /** Square Hunter — 합이 TARGET 이 되는 네모를 모두 세는 팀 대항 수학 게임 (진행 화면·학생 참가·혼자 하기) */
@@ -20,8 +22,6 @@ export const SITE = {
   dujiPangPangUrl: 'https://dujipangpang.vercel.app/',
   /** 수학 아틀리에 — 중1~3 교과 개념별 게임과 학년 무관 두뇌 챌린지를 모은 게임 도서관 */
   mathAtelierUrl: 'https://math-game-arcade.vercel.app/',
-  /** 엠버 슬라이드 — 판을 밀어 동류항을 합치는 중1 일차식 퍼즐 (12라운드) */
-  emberSlideUrl: 'https://ember-slide.vercel.app/',
   /** 개인정보처리방침 등에 적는 문의처 (관리자 이메일) */
   contactEmail: 'heopx114@gmail.com',
   /** Supabase 무료 요금제 기준 (요금제를 바꾸면 고치기) */

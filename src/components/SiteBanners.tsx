@@ -5,11 +5,11 @@ import dujiShot from '@/assets/sites/duji.jpg'
 import gameShot from '@/assets/sites/game.jpg'
 import greensoriShot from '@/assets/sites/greensori.jpg'
 import killerShot from '@/assets/sites/killer.jpg'
+import rookieShot from '@/assets/sites/rookie.jpg'
 import newsShot from '@/assets/sites/news.jpg'
 import squareShot from '@/assets/sites/square.jpg'
 import zeropangShot from '@/assets/sites/zeropang.jpg'
 import atelierShot from '@/assets/sites/atelier.jpg'
-import emberShot from '@/assets/sites/ember.jpg'
 
 type Site = { href: string; icon: string; name: string; desc: string; shot: StaticImageData; className: string }
 
@@ -41,6 +41,14 @@ const SITES: Site[] = [
     desc: '수능 킬러 문항 분석 · 대학별 수리논술 · 일본 대학 입시 수학',
     shot: killerShot,
     className: 'from-rose-700 to-orange-500',
+  },
+  {
+    href: SITE.rookieShrekMathUrl,
+    icon: '🌱',
+    name: '루키들의 수학몰',
+    desc: '고1·고3 학력평가 · 평가원 기출 2~3점 문항을 시험처럼 풀고 바로 채점',
+    shot: rookieShot,
+    className: 'from-sky-700 to-emerald-500',
   },
   {
     href: SITE.greensoriUrl,
@@ -90,14 +98,6 @@ const SITES: Site[] = [
     desc: '중1~3 개념별 게임 41개 · 두뇌 챌린지 랭킹전과 2인 대결',
     shot: atelierShot,
     className: 'from-emerald-800 to-amber-600',
-  },
-  {
-    href: SITE.emberSlideUrl,
-    icon: '🔥',
-    name: '엠버 슬라이드',
-    desc: '판을 밀어 동류항끼리 합치는 중1 일차식 퍼즐',
-    shot: emberShot,
-    className: 'from-slate-900 to-orange-600',
   },
 ]
 
