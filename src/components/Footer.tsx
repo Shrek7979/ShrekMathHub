@@ -4,7 +4,7 @@ import { SITE } from '@/lib/site'
 export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 pb-20 pt-6 text-xs lg:pb-6 text-slate-500 sm:flex-row sm:items-center sm:justify-between">
         <p>
           {SITE.name} · {SITE.tagline}
         </p>
@@ -26,6 +26,9 @@ export function Footer() {
           </a>
           <a href={SITE.killerShrekMathUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
             수능·논술 · 킬러들의 수학몰 ↗
+          </a>
+          <a href={SITE.rookieShrekMathUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
+            학력평가 기출 · 루키들의 수학몰 ↗
           </a>
           <a href={SITE.gameUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">
             수학 게임 · ShrekMath Game ↗

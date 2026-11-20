@@ -7,7 +7,7 @@ import { Gate } from '@/components/Gate'
 import { POST_LIST_COLUMNS, PostItem } from '@/components/ListItems'
 import { Empty, LoadError, Spinner } from '@/components/ui'
 import { BOARD_CATEGORIES, NOTICE } from '@/lib/curriculum'
-import { POST_SEARCH_FIELDS, searchFilters } from '@/lib/format'
+import { appendNew, POST_SEARCH_FIELDS, searchFilters } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/lib/types'
 
@@ -89,7 +89,7 @@ function Board() {
         setLoadingMore(false)
         if (error) return setFailed(true)
         const rows = (data as unknown as Post[]) ?? []
-        setItems((prev) => (page === 0 ? rows : [...(prev ?? []), ...rows]))
+        setItems((prev) => (page === 0 ? rows : appendNew(prev, rows)))
         setTotal(count ?? 0)
       })
     return () => {

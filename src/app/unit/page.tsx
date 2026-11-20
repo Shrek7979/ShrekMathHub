@@ -38,7 +38,7 @@ function Unit() {
   const params = useSearchParams()
   const level: SchoolLevel = params.get('level') === '중' ? '중' : '고'
   const subject = params.get('subject') ?? ''
-  const unit = (params.get('unit') ?? '').slice(0, 40)
+  const unit = (params.get('unit') ?? '').slice(0, 60)
   const [resources, setResources] = useState<Resource[] | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [failed, setFailed] = useState(false)

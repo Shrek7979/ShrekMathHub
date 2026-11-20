@@ -14,6 +14,8 @@ export function useDraft<T extends object>(key: string, value: T, restore: (v: T
   // 처음 연 모습(또는 불러온 모습)과 달라졌을 때만 '쓰는 중'으로 본다 (미리 채운 과목·단원은 쓰는 중이 아님)
   const baseline = useRef<string | null>(null)
   const justRestored = useRef(false)
+  // 올리기 성공 뒤 clear() 하면, 아직 기다리던 저장이 지운 글을 되살리지 못하게 막는다
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 처음 한 번: 저장된 것이 있으면 불러오기
   useEffect(() => {
@@ -41,10 +43,12 @@ export function useDraft<T extends object>(key: string, value: T, restore: (v: T
     if (json === baseline.current) return
     dirty.current = true
     const t = setTimeout(() => {
+      timer.current = null
       try {
         localStorage.setItem(key, json)
       } catch {}
     }, 500)
+    timer.current = t
     return () => clearTimeout(t)
   }, [key, json, enabled])
 
@@ -65,6 +69,8 @@ export function useDraft<T extends object>(key: string, value: T, restore: (v: T
     restored,
     /** 올리기 성공·버리기 때 */
     clear: () => {
+      if (timer.current) clearTimeout(timer.current)
+      timer.current = null
       dirty.current = false
       setRestored(false)
       try {

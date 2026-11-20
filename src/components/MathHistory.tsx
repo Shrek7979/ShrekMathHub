@@ -18,7 +18,12 @@ import {
 } from '@/lib/history-days'
 import { useAuth } from './AuthProvider'
 import { HistoryArt } from './HistoryArt'
-import { Markdown } from './Markdown'
+import dynamic from 'next/dynamic'
+
+// 첫 화면(로그인 전)에도 나오는 코너라, 수식·마크다운 도구(무거움)는 화면이 뜬 뒤에 따로 받는다
+const Markdown = dynamic(() => import('./Markdown').then((m) => m.Markdown), {
+  loading: () => null,
+})
 
 /**
  * "오늘의 수학사" 카드 — 오늘(한국 시간) 태어났거나 세상을 떠난 수학자 한 명과 그날의 사건.

@@ -91,7 +91,9 @@ function Detail() {
     try {
       await downloadFile(f)
       await supabase.rpc('count_download', { rid })
-      setR((x) => (x ? { ...x, download_count: x.download_count + 1 } : x))
+      // 한 선생님은 한 번만 세므로, 화면 숫자도 실제 값으로 다시 받아 온다
+      const { data } = await supabase.from('resources').select('download_count').eq('id', rid).maybeSingle()
+      if (data) setR((x) => (x ? { ...x, download_count: data.download_count } : x))
     } catch (e) {
       alert(koError(e))
     } finally {

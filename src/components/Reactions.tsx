@@ -42,7 +42,8 @@ export function Reactions({ target }: { target: Target }) {
     if (error && error.code !== '23505') return alert(koError(error))
     if (table === 'likes') {
       setLiked(!on)
-      setLikeCount((c) => Math.max(0, c + (on ? -1 : 1)))
+      // 이미 눌러 둔 상태였다면 숫자는 그대로 (다른 창에서 누른 경우)
+      if (!error) setLikeCount((c) => Math.max(0, c + (on ? -1 : 1)))
     } else {
       setSaved(!on)
     }

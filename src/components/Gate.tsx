@@ -84,6 +84,8 @@ export function PendingCard({ name }: { name: string }) {
   }, [refreshProfile])
   // Google 로 처음 들어온 선생님은 아직 학교·확인 정보를 적지 않았다
   const [applied, setApplied] = useState<boolean | null>(null)
+  const [checkFailed, setCheckFailed] = useState(false)
+  const [retry, setRetry] = useState(0)
 
   useEffect(() => {
     supabase
@@ -91,9 +93,22 @@ export function PendingCard({ name }: { name: string }) {
       .select('school')
       .eq('id', uid)
       .maybeSingle()
-      .then(({ data }) => setApplied(!!data?.school))
-  }, [uid])
+      .then(({ data, error }) => {
+        // 불러오기에 실패했을 때 '아직 신청 안 함'으로 보면 이미 신청한 선생님께 신청서가 또 뜬다
+        if (error) return setCheckFailed(true)
+        setApplied(!!data?.school)
+      })
+  }, [uid, retry])
 
+  if (checkFailed)
+    return (
+      <LoadError
+        onRetry={() => {
+          setCheckFailed(false)
+          setRetry((n) => n + 1)
+        }}
+      />
+    )
   if (applied === null) return <Spinner />
   if (!applied)
     return (

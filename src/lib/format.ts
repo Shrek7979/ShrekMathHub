@@ -67,3 +67,9 @@ export function koError(e: unknown): string {
   if (/[가-힣]/.test(msg)) return msg
   return `문제가 생겼어요. 잠시 뒤 다시 해 주세요. (${msg.slice(0, 80)})`
 }
+
+/** '더 보기'로 이어 붙일 때, 그사이 새 글이 올라와 밀려 내려온 같은 글이 두 번 나오지 않게 */
+export function appendNew<T extends { id: string | number }>(prev: T[] | null, rows: T[]): T[] {
+  const seen = new Set((prev ?? []).map((r) => r.id))
+  return [...(prev ?? []), ...rows.filter((r) => !seen.has(r.id))]
+}

@@ -7,7 +7,7 @@ import { Gate } from '@/components/Gate'
 import { RESOURCE_LIST_COLUMNS, ResourceItem } from '@/components/ListItems'
 import { Empty, LoadError, Spinner } from '@/components/ui'
 import { RESOURCE_TYPES, SUBJECTS } from '@/lib/curriculum'
-import { RESOURCE_SEARCH_FIELDS, searchFilters } from '@/lib/format'
+import { appendNew, RESOURCE_SEARCH_FIELDS, searchFilters } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import type { Resource, SchoolLevel } from '@/lib/types'
 
@@ -77,7 +77,7 @@ function ResourceList() {
       setLoadingMore(false)
       if (error) return setFailed(true)
       const rows = (data as unknown as Resource[]) ?? []
-      setItems((prev) => (page === 0 ? rows : [...(prev ?? []), ...rows]))
+      setItems((prev) => (page === 0 ? rows : appendNew(prev, rows)))
       setTotal(count ?? 0)
     }
     load()
